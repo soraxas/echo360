@@ -1,0 +1,3 @@
+python-dateutil>=2.2
+selenium>=2.44.0
+ffmpy>=0.2.2
