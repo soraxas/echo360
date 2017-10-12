@@ -78,14 +78,14 @@ optional arguments:
 
 ### Download all available lectures ###
 ```
->>> python usydEcho360.py                          \
+>>> python usydEcho360.py                       \
   --uuid "041698d6-f43a-4b09-a39a-b90475a63530" \
   --ouput "~/Lectures"
 ```
 
 ### Download all lectures on or before a date ###
 ```
->>> python usydEcho360.py                          \
+>>> python usydEcho360.py                       \
   --uuid "041698d6-f43a-4b09-a39a-b90475a63530" \
   --ouput "~/Lectures"                          \
   --before-date "2014-10-14"
@@ -93,7 +93,7 @@ optional arguments:
 
 ### Download all lectures on or after a date ###
 ```
-python usydEcho360.py                              \
+python usydEcho360.py                           \
   --uuid "041698d6-f43a-4b09-a39a-b90475a63530" \
   --ouput "~/Lectures"                          \
   --after-date "2014-10-14"
@@ -101,7 +101,7 @@ python usydEcho360.py                              \
 
 ### Download all lectures in a given date range (inclusive) ###
 ```
->>> python usydEcho360.py                          \
+>>> python usydEcho360.py                       \
   --uuid "041698d6-f43a-4b09-a39a-b90475a63530" \
   --ouput "~/Lectures"                          \
   --after-date "2014-08-26"                     \
@@ -113,7 +113,7 @@ python usydEcho360.py                              \
 ### How do I retrieve the UUID for a course? ###
 This is the most involved part (unless you have access to a titles file). What you need is the URL to the course's main Echo360 lecture page. It's the main page that lists all the recorded lectures and gives you the option to stream them or download them individually.
 
-![CIVL4093 Main Echo360 Lecture Page](https://imgur.com/a/xkJT0)
+![CIVL4093 Main Echo360 Lecture Page](https://i.imgur.com/jy8a99D.png)
 
 
 You can usually find this link on your course's main webpage. If your course webpage only links directly to videos, then you should be able to navigate back to the main portale via that link.
