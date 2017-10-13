@@ -5,34 +5,19 @@ import sys
 
 class EchoVideos(object):
 
-    def __init__(self, videos_json, titles, driver):
+    def __init__(self, videos_json, driver):
         assert(videos_json is not None)
-
         self._driver = driver
         self._videos = []
         for video_json in videos_json:
             video_date = EchoVideo.get_date(video_json)
-            video_title = self._get_title(titles, video_date)
-            self._videos.append(EchoVideo(video_json, video_title, self._driver))
+            self._videos.append(EchoVideo(video_json, self._driver))
 
         self._videos.sort(key=operator.attrgetter("date"))
 
     @property
     def videos(self):
         return self._videos
-
-    def _get_title(self, titles, date):
-        if titles is None:
-            return ""
-        try:
-            for title in titles:
-                title_date = dateutil.parser.parse(title["date"]).date()
-                if date == title_date:
-                    return title["title"].encode("ascii")
-            return ""
-
-        except KeyError as e:
-            blow_up("Unable to parse either titles or course_data JSON", e)
 
     def _blow_up(self, str, e):
         print(str)
@@ -43,8 +28,7 @@ class EchoVideos(object):
 
 class EchoVideo(object):
 
-    def __init__(self, video_json, title, driver):
-        self._title = title
+    def __init__(self, video_json, driver):
         self._driver = driver
 
         try:
@@ -70,10 +54,6 @@ class EchoVideo(object):
             self._date = date.strftime("%Y-%m-%d")
         except KeyError as e:
             self._blow_up("Unable to parse video data from JSON (course_data)", e)
-
-    @property
-    def title(self):
-        return self._title
 
     @property
     def date(self):

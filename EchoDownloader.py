@@ -10,6 +10,8 @@ class EchoDownloader(object):
 
     def __init__(self, course, output_dir, date_range, username, password):
         self._course = course
+        if output_dir == '':
+            output_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
         self._output_dir = output_dir
         self._date_range = date_range
 
@@ -55,18 +57,19 @@ class EchoDownloader(object):
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         total_videos = len(filtered_videos)
 
-        # Download the newest video first but maintain it's original index
-        # in case a JSON file isn't passed (and we need to label them as
-        # Lecture 1, 2, ...)
+        downloaded_videos = []
         for i, video in reversed(list(enumerate(filtered_videos))):
-            # TODO Check if the lecture number is included in the JSON object.
             lecture_number = self._find_pos(videos, video)
-            title = video.title if (video.title != "") else "Lecture {}".format(lecture_number+1)
+            title = "Lecture {}".format(lecture_number+1)
             filename = self._get_filename(self._course.course_id, video.date, title)
 
             print(("Downloading {} of {}: {}".format(total_videos - i, total_videos, video.url)))
             print(("  to {}\n".format(filename)))
             self._download_as(video.url, filename)
+            downloaded_videos.insert(0, filename)
+            if i == 8:
+                break
+        print(self.success_msg(self._course.course_name, downloaded_videos))
 
     @property
     def useragent(self):
@@ -79,34 +82,41 @@ class EchoDownloader(object):
     def _download_as(self, video, filename):
         print(video)
         print(filename)
-        exit()
-        try:
-            request = urllib.request.Request(video)
-            request.add_header('User-Agent', self._useragent)
-            opener = urllib.request.build_opener()
+        print(self._output_dir)
 
-            with open(os.path.join(self._output_dir, filename), "wb") as local_file:
-                local_file.write(opener.open(request).read())
+        from hls_downloader import Downloader
+        echo360_downloader = Downloader(50)
+        echo360_downloader.run(video, self._output_dir)
 
-        except urllib.error.HTTPError as e:
-            print(("HTTP Error:", e.code, video))
-        except urllib.error.URLError as e:
-            print(("URL Error:", e.reason, video))
+        # rename file
+        os.rename(os.path.join(echo360_downloader.result_file_name), os.path.join(self._output_dir, filename))
 
     def _initialize(self, echo_course):
         self._driver.get(self._course.url)
 
     def _get_filename(self, course, date, title):
-        return "{} - {} - {}.m4v".format(course, date, title)
+        return "{} - {} - {}.mp4".format(course, date, title)
 
     def _in_date_range(self, date_string):
         the_date = dateutil.parser.parse(date_string).date()
         return self._date_range[0] <= the_date and the_date <= self._date_range[1]
-
 
     def _find_pos(self, videos, the_video):
         for i, video in enumerate(videos):
             if video.date == the_video.date:
                 return i
 
-        return -1
+    def success_msg(self, course_name, videos):
+        bar = '================================================================='
+        msg = '\n{0}\n'.format(bar)
+        msg += '    Course: {0} - {1}'.format(self._course.course_id, self._course.course_name)
+        msg += '\n{0}\n'.format(bar)
+        msg += '    Successfully downloaded: '
+        if len(videos) == 1:
+            msg += '{}\n'.format(videos[0])
+        else:
+            msg += '\n'
+            for i in videos:
+                msg += '        {}\n'.format(i)
+        msg += '{0}\n'.format(bar)
+        return msg

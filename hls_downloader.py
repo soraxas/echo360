@@ -18,6 +18,7 @@ class Downloader:
         self.succed = {}
         self.failed = []
         self.ts_total = 0
+        self._result_file_name = None
 
     def _get_http_session(self, pool_connections, pool_maxsize, max_retries):
             session = requests.Session()
@@ -27,7 +28,6 @@ class Downloader:
             return session
 
     def run(self, m3u8_url, dir=''):
-        self.MAIN_FILE_NAME = None
         self.dir = dir
         if self.dir and not os.path.isdir(self.dir):
             os.makedirs(self.dir)
@@ -57,8 +57,7 @@ class Downloader:
                     g1.join()
         else:
             print(r.status_code)
-        print(self.MAIN_FILE_NAME)
-        infile_name = os.path.join(self.dir, self.MAIN_FILE_NAME.split('.')[0]+'_all.'+self.MAIN_FILE_NAME.split('.')[-1])
+        infile_name = os.path.join(self.dir, self._result_file_name.split('.')[0]+'_all.'+self.result_file_name.split('.')[-1])
         outfile_name = infile_name.split('.')[0] + '.mp4'
         print('Converting "{0}" to "{1}"'.format(infile_name, outfile_name))
         from ffmpy import FFmpeg
@@ -67,6 +66,9 @@ class Downloader:
             outputs={outfile_name: ['-c','copy']}
         )
         ff.run()
+        # delete source file after done
+        os.remove(os.path.join(self.dir, infile_name))
+        self._result_file_name = outfile_name
 
     def _download(self, ts_list):
         self.pool.map(self._worker, ts_list)
@@ -100,8 +102,8 @@ class Downloader:
         while index < self.ts_total:
             file_name = self.succed.get(index, '')
             if file_name:
-                if self.MAIN_FILE_NAME is None:
-                    self.MAIN_FILE_NAME = file_name
+                if self._result_file_name is None:
+                    self._result_file_name = file_name
                 infile = open(os.path.join(self.dir, file_name), 'rb')
                 if not outfile:
                     outfile = open(os.path.join(self.dir, file_name.split('.')[0]+'_all.'+file_name.split('.')[-1]), 'wb')
@@ -113,6 +115,10 @@ class Downloader:
                 time.sleep(1)
         if outfile:
             outfile.close()
+
+    @property
+    def result_file_name(self):
+        return self._result_file_name
 
 if __name__ == '__main__':
     downloader = Downloader(50)

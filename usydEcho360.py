@@ -27,11 +27,6 @@ def handle_args():
                               '115f3def-7371-4e98-b72f-6efe53771b2a' in \
                               http://recordings.engineering.illinois.edu/ess/portal/section/115f3def-7371-4e98-b72f-6efe53771b2a)",
                         metavar="COURSE_UUID")
-    parser.add_argument("--titles", "-f",
-                        help="Path to JSON file containing date to title \
-                              mapping. See Readme.md for info on the \
-                              required format",
-                        metavar="TITLES_PATH")
     parser.add_argument("--output", "-o",
                         help="Path to the desired output directory The output \
                              directory must exist. Otherwise the current \
@@ -63,9 +58,6 @@ def handle_args():
     args = vars(parser.parse_args())
     course_uuid = args["uuid"]
 
-    titles_path = os.path.expanduser(args["titles"]) if args["titles"] is not None else ""
-    titles_path = titles_path if os.path.isfile(titles_path) else ""
-
     output_path = os.path.expanduser(args["output"]) if args["output"] is not None else ""
     output_path = output_path if os.path.isdir(output_path) else ""
 
@@ -81,18 +73,12 @@ def handle_args():
         import getpass
         password = getpass.getpass('Passowrd for {0} : '.format(username))
 
-    return (course_uuid, titles_path, output_path, after_date, before_date, username, password)
+    return (course_uuid, output_path, after_date, before_date, username, password)
 
 def main():
-    course_uuid, titles_path, output_path, after_date, before_date, username, password = handle_args()
+    course_uuid, output_path, after_date, before_date, username, password = handle_args()
 
-    titles = None
-    if titles_path != "":
-        with open(titles_path, "r") as titles_json:
-            data = json.load(titles_json)
-            titles = data["titles"] if "titles" in data else None
-
-    course = EchoCourse(course_uuid, titles)
+    course = EchoCourse(course_uuid)
     downloader = EchoDownloader(course, output_path, date_range=(after_date, before_date), username=username, password=password)
     downloader.download_all()
 

@@ -7,10 +7,10 @@ from EchoVideos import EchoVideos
 
 class EchoCourse(object):
 
-    def __init__(self, uuid, titles):
+    def __init__(self, uuid):
         self._course_id = ""
+        self._course_name = ""
         self._uuid = uuid
-        self._titles = titles
         self._videos = None
         self._driver = None
 
@@ -25,7 +25,7 @@ class EchoCourse(object):
             try:
                 course_data_json = self._get_course_data()
                 videos_json = course_data_json["section"]["presentations"]["pageContents"]
-                self._videos = EchoVideos(videos_json, self._titles, self._driver)
+                self._videos = EchoVideos(videos_json, self._driver)
             except KeyError as e:
                 self._blow_up("Unable to parse course videos from JSON (course_data)", e)
 
@@ -57,11 +57,18 @@ class EchoCourse(object):
                 course_data_json = self._get_course_data()
 
                 self._course_id = course_data_json["section"]["course"]["identifier"]
+                self._course_name = course_data_json["section"]["course"]["name"]
             except KeyError as e:
                 self._blow_up("Unable to parse course id (e.g. CS473) from JSON (course_data)", e)
 
         return self._course_id
 
+    @property
+    def course_name(self):
+        if self._course_name == "":
+            # trigger getting course_id to get course name as well
+            self.course_id
+        return self._course_name
     @property
     def driver(self):
         if self._driver is None:
