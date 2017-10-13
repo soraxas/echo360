@@ -43,11 +43,12 @@ This is required for transcoding ts file to mp4 file. See [here](https://github.
 ```
 >>> python usydEcho360.py
 
-usage: usydEcho360.py [-h] --uuid COURSE_UUID [--titles TITLES_PATH]
-[--output OUTPUT_PATH] [--after-date AFTER_DATE(YYYY-MM-DD)]
-[--before-date BEFORE_DATE(YYYY-MM-DD)]
+usage: usydEcho360.py [-h] --uuid COURSE_UUID [--output OUTPUT_PATH]
+                      [--after-date AFTER_DATEYYYY-MM-DD)]
+                      [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
+                      [--password PASSWORD]
 
-Download lectures from UIUC's Echo360 portal.
+Download lectures from USYD's Echo360 portal.
 
 optional arguments:
   -h, --help                              Show this help message and exit
