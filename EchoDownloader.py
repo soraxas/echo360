@@ -109,12 +109,8 @@ class EchoDownloader(object):
         msg = '\n{0}\n'.format(bar)
         msg += '    Course: {0} - {1}'.format(self._course.course_id, self._course.course_name)
         msg += '\n{0}\n'.format(bar)
-        msg += '    Successfully downloaded: '
-        if len(videos) == 1:
-            msg += '{}\n'.format(videos[0])
-        else:
-            msg += '\n'
-            for i in videos:
-                msg += '        {}\n'.format(i)
+        msg += '    Successfully downloaded:\n'
+        for i in videos:
+            msg += '        {}\n'.format(i)
         msg += '{0}\n'.format(bar)
         return msg
