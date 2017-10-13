@@ -67,8 +67,6 @@ class EchoDownloader(object):
             print(("  to {}\n".format(filename)))
             self._download_as(video.url, filename)
             downloaded_videos.insert(0, filename)
-            if i == 8:
-                break
         print(self.success_msg(self._course.course_name, downloaded_videos))
 
     @property
