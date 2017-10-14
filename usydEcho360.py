@@ -71,7 +71,7 @@ def handle_args():
         username = input('Unikey: ')
     if password is None:
         import getpass
-        password = getpass.getpass('Passowrd for {0} : '.format(username))
+        password = getpass.getpass('Passowrd for {0}: '.format(username))
 
     return (course_uuid, output_path, after_date, before_date, username, password)
 

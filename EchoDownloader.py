@@ -4,6 +4,7 @@ import sys
 import urllib.request, urllib.error, urllib.parse
 
 from selenium import webdriver
+import selenium
 
 
 class EchoDownloader(object):
@@ -36,20 +37,24 @@ class EchoDownloader(object):
         print('Accessing {0}'.format(self._course.url))
         self._driver.get(self._course.url)
 
+        try:
+            # if error that means no need to enter username or password
+            # for example: https://view.streaming.sydney.edu.au:8443/ess/portal/section/ed9b26eb-a785-4f4e-bd51-69f3faab388a
+            # Input username and password:
+            user_name = self._driver.find_element_by_id('j_username')
+            user_name.clear()
+            user_name.send_keys(username)
 
-        # Input username and password:
-        user_name = self._driver.find_element_by_id('j_username')
-        user_name.clear()
-        user_name.send_keys(username)
-
-        user_passwd = self._driver.find_element_by_id('j_password')
-        user_passwd.clear()
-        user_passwd.send_keys(password)
+            user_passwd = self._driver.find_element_by_id('j_password')
+            user_passwd.clear()
+            user_passwd.send_keys(password)
 
 
-        login_btn = self._driver.find_element_by_id('login-btn')
-        login_btn.submit()
-
+            login_btn = self._driver.find_element_by_id('login-btn')
+            login_btn.submit()
+        except selenium.common.exceptions.NoSuchElementException:
+            print('INFO: No need to login')
+            pass
         self._videos = []
 
     def download_all(self):
