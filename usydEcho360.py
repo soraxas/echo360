@@ -68,6 +68,8 @@ def handle_args():
     password = args["password"]
 
     if username is None:
+        if sys.version_info < (3,0): # special handling for python2
+            input = raw_input
         username = input('Unikey: ')
     if password is None:
         import getpass
