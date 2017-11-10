@@ -79,7 +79,7 @@ class EchoDownloader(object):
         self._useragent = useragent
 
     def _download_as(self, video, filename):
-        print()
+        print('')
         print('-'*50)
         print('Downloading "{}"'.format(filename))
         from hls_downloader import Downloader
