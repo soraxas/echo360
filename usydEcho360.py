@@ -87,9 +87,10 @@ if __name__ == '__main__':
     # First test for existance of phantomjs binary file
     if not os.path.isfile(pbd.get_phantomjs_bin()):
         # Initiate downloading binary file
-        print('='*60)
-        print('  Binary file of PhantomJS not found, will initiate a downloading process now...')
+        print('='*65)
+        print('  Binary file of PhantomJS not found, will initiate a download process now...')
         pbd.download()
-        print('='*60)
+	print('  Done!')
+        print('='*65)
     else:
         main()
