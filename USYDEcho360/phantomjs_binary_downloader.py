@@ -46,7 +46,7 @@ def download():
     bin_path = get_bin_root_path()
     if not os.path.exists(bin_path): # create bin directory if not exists
         os.makedirs(bin_path)
-#    wget.download(link, out='{0}/{1}'.format(bin_path, filename))
+    wget.download(link, out='{0}/{1}'.format(bin_path, filename))
     print('>> Extracting archive file "{0}"'.format(filename))
     if sys.version_info >= (3,0): # compatibility for python 2 & 3
         shutil.unpack_archive('{0}/{1}'.format(bin_path, filename), extract_dir=bin_path)
@@ -59,4 +59,3 @@ def download():
             import tarfile
             with tarfile.open('{0}/{1}'.format(bin_path, filename)) as tar:
                 tar.extractall(path=bin_path)
-

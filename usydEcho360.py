@@ -4,9 +4,9 @@ import os
 import sys
 
 from datetime import datetime
-from usydecho360.EchoCourse import EchoCourse
-from usydecho360.EchoDownloader import EchoDownloader
-import usydecho360.phantomjs_binary_downloader as pbd
+from USYDEcho360.EchoCourse import EchoCourse
+from USYDEcho360.EchoDownloader import EchoDownloader
+import USYDEcho360.phantomjs_binary_downloader as pbd
 
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
@@ -88,9 +88,9 @@ if __name__ == '__main__':
     if not os.path.isfile(pbd.get_phantomjs_bin()):
         # Initiate downloading binary file
         print('='*65)
-        print('  Binary file of PhantomJS not found, will initiate a download process now...')
+        print('Binary file of PhantomJS not found, will initiate a download process now...')
         pbd.download()
-	print('  Done!')
+        print('Done!')
         print('='*65)
     else:
         main()

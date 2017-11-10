@@ -2,7 +2,7 @@ import json
 import sys
 
 from selenium import webdriver
-from usydecho360.EchoVideos import EchoVideos
+from USYDEcho360.EchoVideos import EchoVideos
 
 
 class EchoCourse(object):

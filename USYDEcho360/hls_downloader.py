@@ -98,7 +98,7 @@ class Downloader:
         )
         ff.run()
         # delete source file after done
-        os.remove(os.path.join(self.dir, infile_name))
+        os.remove(infile_name)
         self._result_file_name = outfile_name
         print('Done!')
 

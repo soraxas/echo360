@@ -6,7 +6,7 @@ from selenium import webdriver
 import selenium
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-from usydecho360.hls_downloader import Downloader
+from USYDEcho360.hls_downloader import Downloader
 
 class EchoDownloader(object):
 
@@ -27,7 +27,7 @@ class EchoDownloader(object):
             "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
             "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         )
-        from usydecho360.phantomjs_binary_downloader import get_phantomjs_bin
+        from USYDEcho360.phantomjs_binary_downloader import get_phantomjs_bin
         self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap)
 
 
