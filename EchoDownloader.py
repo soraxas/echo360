@@ -33,7 +33,8 @@ class EchoDownloader(object):
         self._course.set_driver(self._driver)
 
         # Initialize to establish the 'anon' cookie that Echo360 sends.
-        print('Accessing {0}'.format(self._course.url))
+        sys.stdout.write('Logging into "{0}"... '.format(self._course.url))
+        sys.stdout.flush()
         self._driver.get(self._course.url)
 
         try:
@@ -48,18 +49,38 @@ class EchoDownloader(object):
             user_passwd.clear()
             user_passwd.send_keys(password)
 
-
             login_btn = self._driver.find_element_by_id('login-btn')
             login_btn.submit()
+
         except selenium.common.exceptions.NoSuchElementException:
+            if self._driver.page_source.strip() == '<html><head></head><body></body></html>':
+                print('Failed!')
+                print('  > Failed to connect to server, is your internet working...?')
+                exit(1)
             print('INFO: No need to login')
+        # test if the login is success
+        try:
+            self._driver.find_element_by_id('j_username')
+        except selenium.common.exceptions.NoSuchElementException:
             pass
+        else:
+            print('Failed!')
+            print('  > Failed to login, is your username/password correct...?')
+            exit(1)
+        # print(self._driver.page_source)
         self._videos = []
+        print('Done!')
 
     def download_all(self):
+        sys.stdout.write('Retrieving echo360 Course Info... ')
+        sys.stdout.flush()
         videos = self._course.get_videos().videos
+        print('Done!')
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
-        total_videos = len(filtered_videos)
+        print('=' * 60)
+        print('    Course: {0} - {1}'.format(self._course.course_id, self._course.course_name))
+        print('      Total videos to download: {0} out of {1}'.format(len(videos), len(filtered_videos)))
+        print('=' * 60)
 
         downloaded_videos = []
         for i, video in reversed(list(enumerate(filtered_videos))):
@@ -106,7 +127,7 @@ class EchoDownloader(object):
                 return i
 
     def success_msg(self, course_name, videos):
-        bar = '================================================================='
+        bar = '=' * 65
         msg = '\n{0}\n'.format(bar)
         msg += '    Course: {0} - {1}'.format(self._course.course_id, self._course.course_name)
         msg += '\n{0}\n'.format(bar)
