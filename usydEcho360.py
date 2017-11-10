@@ -4,9 +4,9 @@ import os
 import sys
 
 from datetime import datetime
-from USYDEcho360.EchoCourse import EchoCourse
-from USYDEcho360.EchoDownloader import EchoDownloader
-import USYDEcho360.phantomjs_binary_downloader as pbd
+from USYDecho360.EchoCourse import EchoCourse
+from USYDecho360.EchoDownloader import EchoDownloader
+import USYDecho360.phantomjs_binary_downloader as pbd
 
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
