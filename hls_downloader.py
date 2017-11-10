@@ -5,7 +5,7 @@ monkey.patch_all()
 from gevent.pool import Pool
 import gevent
 import requests
-import os
+import os, sys
 import time
 
 def urljoin(a, b):
@@ -15,6 +15,30 @@ def urljoin(a, b):
     while b[0] == '/':
         b = b[1:]
     return a + b
+
+# update_progress() : Displays or updates a console progress bar
+## Accepts a float between 0 and 1. Any int will be converted to a float.
+## A value under 0 represents a 'halt'.
+## A value at 1 or bigger represents 100%
+# def update_progress(current, total):
+def update_progress(current, total, title=None):
+    if title is None:
+        title = 'Progress'
+    barLength = 20 # Modify this to change the length of the progress bar
+    status = " {}/{}".format(current, total)
+    progress = float(current/total)
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status += " Done!\r\n"
+    block = "=" * int(round(barLength*progress))
+    if len(block) < barLength:
+        block += '>'
+    text = "\r{0}: [{1}] {2:.2f}% {3}".format(title, block + " "*(barLength-len(block)), progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 class Downloader:
     def __init__(self, pool_size, retry=3):
@@ -46,7 +70,6 @@ class Downloader:
                 if len(ts_list) == 1:
                     file_name = ts_list[0].split('/')[-1].split('?')[0]
                     chunk_list_url = "{0}/{1}".format(m3u8_url[:m3u8_url.rfind('/')], file_name)
-                    print("Getting chunklist at: {0}".format(chunk_list_url))
                     r = self.session.get(chunk_list_url, timeout=20)
                     if r.ok:
                         body = r.content
@@ -58,17 +81,18 @@ class Downloader:
 
                 if ts_list:
                     self.ts_total = len(ts_list)
-                    print('ts total: {0}'.format(self.ts_total))
+                    self.ts_current = 0
                     g1 = gevent.spawn(self._join_file)
                     self._download(ts_list)
                     g1.join()
         else:
-            print(r.status_code)
+            print("Failed status code: {}".format(r.status_code))
         infile_name = os.path.join(self.dir, self._result_file_name.split('.')[0]+'_all.'+self.result_file_name.split('.')[-1])
         outfile_name = infile_name.split('.')[0] + '.mp4'
-        print('Converting "{0}" to "{1}"'.format(infile_name, outfile_name))
+        print('  > Converting to mp4 format... ', end='')
         from ffmpy import FFmpeg
         ff = FFmpeg(
+            global_options='-loglevel panic',
             inputs={infile_name: None},
             outputs={outfile_name: ['-c','copy']}
         )
@@ -76,6 +100,7 @@ class Downloader:
         # delete source file after done
         os.remove(os.path.join(self.dir, infile_name))
         self._result_file_name = outfile_name
+        print('Done!')
 
     def _download(self, ts_list):
         self.pool.map(self._worker, ts_list)
@@ -93,7 +118,8 @@ class Downloader:
                 r = self.session.get(url, timeout=20)
                 if r.ok:
                     file_name = url.split('/')[-1].split('?')[0]
-                    print('Downloading: {0}'.format(file_name))
+                    self.ts_current += 1
+                    update_progress(self.ts_current, self.ts_total, title='  > {}'.format('Progress'))
                     with open(os.path.join(self.dir, file_name), 'wb') as f:
                         f.write(r.content)
                     self.succed[index] = file_name

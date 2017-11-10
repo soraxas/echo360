@@ -2,6 +2,10 @@ import dateutil.parser
 import datetime
 import operator
 import sys
+import selenium
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 class EchoVideos(object):
 
@@ -34,18 +38,22 @@ class EchoVideo(object):
         try:
             video_url = "{0}".format(video_json["richMedia"])
             video_url = str(video_url) # cast back to string
-            # a = 'https://view.streaming.sydney.edu.au:8443/ess/echo/presentation/1a700a60-d42f-4e24-bd5d-d23d2d8dd134'
-            # print(video_url)
-            # print(a)
+
             self._driver.get(video_url)
-            # self._driver.get_screenshot_as_file('./211.png')
-            # self._driver.get(a)
-            # self._driver.get_screenshot_as_file('./212.png')
-            # import time
-            # time.sleep(1)
-            # # self._driver.get_screenshot_as_file('./211.png')
-            # self._driver.get('http://getright.com/useragent.html')
-            # self._driver.get_screenshot_as_file('./2.png')
+
+            # wait for maximum 5 second before timeout
+            waitsecond = 10
+            try:
+                WebDriverWait(self._driver, waitsecond).until(
+                EC.presence_of_element_located((By.ID, "content-player"))
+                )
+            except selenium.common.exceptions.TimeoutException:
+                print('ERROR: Connection timeouted after {} second... Possibly internet problem?'.format(waitsecond))
+                exit(1)
+            #
+            # finally:
+            #     self._driver.quit()
+
             m3u8_url = self._driver.find_element_by_id('content-player').find_element_by_tag_name('video').get_attribute('src')
 
             self._url = m3u8_url

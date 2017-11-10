@@ -66,9 +66,6 @@ class EchoDownloader(object):
             lecture_number = self._find_pos(videos, video)
             title = "Lecture {}".format(lecture_number+1)
             filename = self._get_filename(self._course.course_id, video.date, title)
-
-            print(("Downloading {} of {}: {}".format(total_videos - i, total_videos, video.url)))
-            print(("  to {}\n".format(filename)))
             self._download_as(video.url, filename)
             downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
@@ -82,16 +79,16 @@ class EchoDownloader(object):
         self._useragent = useragent
 
     def _download_as(self, video, filename):
-        print(video)
-        print(filename)
-        print(self._output_dir)
-
+        print()
+        print('-'*30)
+        print('Downloading "{}"'.format(filename))
         from hls_downloader import Downloader
         echo360_downloader = Downloader(50)
         echo360_downloader.run(video, self._output_dir)
 
         # rename file
         os.rename(os.path.join(echo360_downloader.result_file_name), os.path.join(self._output_dir, filename))
+        print('-'*30)
 
     def _initialize(self, echo_course):
         self._driver.get(self._course.url)
