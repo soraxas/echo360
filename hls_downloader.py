@@ -89,7 +89,8 @@ class Downloader:
             print("Failed status code: {}".format(r.status_code))
         infile_name = os.path.join(self.dir, self._result_file_name.split('.')[0]+'_all.'+self.result_file_name.split('.')[-1])
         outfile_name = infile_name.split('.')[0] + '.mp4'
-        print('  > Converting to mp4 format... ', end='')
+        sys.stdout.write('  > Converting to mp4 format... ')
+        sys.stdout.flush()
         from ffmpy import FFmpeg
         ff = FFmpeg(
             global_options='-loglevel panic',

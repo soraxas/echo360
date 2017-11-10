@@ -80,7 +80,7 @@ class EchoDownloader(object):
 
     def _download_as(self, video, filename):
         print()
-        print('-'*30)
+        print('-'*50)
         print('Downloading "{}"'.format(filename))
         from hls_downloader import Downloader
         echo360_downloader = Downloader(50)
@@ -88,7 +88,7 @@ class EchoDownloader(object):
 
         # rename file
         os.rename(os.path.join(echo360_downloader.result_file_name), os.path.join(self._output_dir, filename))
-        print('-'*30)
+        print('-'*50)
 
     def _initialize(self, echo_course):
         self._driver.get(self._course.url)
