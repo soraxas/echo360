@@ -41,8 +41,8 @@ class EchoVideo(object):
 
             self._driver.get(video_url)
 
-            # wait for maximum 5 second before timeout
-            waitsecond = 10
+            # wait for maximum 30 second before timeout
+            waitsecond = 30
             try:
                 WebDriverWait(self._driver, waitsecond).until(
                 EC.presence_of_element_located((By.ID, "content-player"))

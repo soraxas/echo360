@@ -52,24 +52,25 @@ class EchoDownloader(object):
             login_btn = self._driver.find_element_by_id('login-btn')
             login_btn.submit()
 
+            # test if the login is success
+            try:
+                self._driver.find_element_by_id('j_username')
+            except selenium.common.exceptions.NoSuchElementException:
+                print('Done!')
+            else:
+                print('Failed!')
+                print('  > Failed to login, is your username/password correct...?')
+                exit(1)
+
         except selenium.common.exceptions.NoSuchElementException:
             if self._driver.page_source.strip() == '<html><head></head><body></body></html>':
                 print('Failed!')
                 print('  > Failed to connect to server, is your internet working...?')
                 exit(1)
             print('INFO: No need to login')
-        # test if the login is success
-        try:
-            self._driver.find_element_by_id('j_username')
-        except selenium.common.exceptions.NoSuchElementException:
-            pass
-        else:
-            print('Failed!')
-            print('  > Failed to login, is your username/password correct...?')
-            exit(1)
+
         # print(self._driver.page_source)
         self._videos = []
-        print('Done!')
 
     def download_all(self):
         sys.stdout.write('Retrieving echo360 Course Info... ')
