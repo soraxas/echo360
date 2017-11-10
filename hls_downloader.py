@@ -9,11 +9,10 @@ import os
 import time
 
 def urljoin(a, b):
-    # add a slash if needed
-    if a[-1] != '/':
-        a += '/'
-    # remove a slash if needed
-    if b[0] == '/':
+    # get url relative root path
+    a = a[:a.rfind('/')+1]
+    # remove slashes at beginning if needed
+    while b[0] == '/':
         b = b[1:]
     return a + b
 
