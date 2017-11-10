@@ -4,7 +4,9 @@ import sys
 
 from selenium import webdriver
 import selenium
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
+from usydecho360.hls_downloader import Downloader
 
 class EchoDownloader(object):
 
@@ -20,13 +22,13 @@ class EchoDownloader(object):
         self._useragent = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         # self._driver = webdriver.PhantomJS()
 
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         dcap = dict(DesiredCapabilities.PHANTOMJS)
         dcap["phantomjs.page.settings.userAgent"] = (
             "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
             "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         )
-        self._driver = webdriver.PhantomJS(desired_capabilities=dcap)
+        from usydecho360.phantomjs_binary_downloader import get_phantomjs_bin
+        self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap)
 
 
         # Monkey Patch, set the course's driver to the one from downloader
@@ -37,9 +39,24 @@ class EchoDownloader(object):
         sys.stdout.flush()
         self._driver.get(self._course.url)
 
+        # first try if we can access content without login
+        # for example: https://view.streaming.sydney.edu.au:8443/ess/portal/section/ed9b26eb-a785-4f4e-bd51-69f3faab388a
         try:
-            # if error that means no need to enter username or password
-            # for example: https://view.streaming.sydney.edu.au:8443/ess/portal/section/ed9b26eb-a785-4f4e-bd51-69f3faab388a
+            self._driver.find_element_by_id('j_username')
+            # should show raise exception here if it does not need to login...
+
+            # retrieve username / password if not given before
+            if username is None or password is None:
+                print('Credentials needed...')
+                if username is None:
+                    if sys.version_info < (3,0): # special handling for python2
+                        input = raw_input
+                    else:
+                        from builtins import input
+                    username = input('Unikey: ')
+                if password is None:
+                    import getpass
+                    password = getpass.getpass('Passowrd for {0}: '.format(username))
             # Input username and password:
             user_name = self._driver.find_element_by_id('j_username')
             user_name.clear()
@@ -67,7 +84,8 @@ class EchoDownloader(object):
                 print('Failed!')
                 print('  > Failed to connect to server, is your internet working...?')
                 exit(1)
-            print('INFO: No need to login')
+            print('Done!')
+            print('INFO: No need to login :)')
 
         # print(self._driver.page_source)
         self._videos = []
@@ -104,7 +122,6 @@ class EchoDownloader(object):
         print('')
         print('-'*60)
         print('Downloading "{}"'.format(filename))
-        from hls_downloader import Downloader
         echo360_downloader = Downloader(50)
         echo360_downloader.run(video, self._output_dir)
 

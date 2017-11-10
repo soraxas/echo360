@@ -3,6 +3,7 @@
 from gevent import monkey
 monkey.patch_all()
 from gevent.pool import Pool
+from ffmpy import FFmpeg
 import gevent
 import requests
 import os, sys
@@ -90,7 +91,6 @@ class Downloader:
         outfile_name = infile_name.split('.')[0] + '.mp4'
         sys.stdout.write('  > Converting to mp4 format... ')
         sys.stdout.flush()
-        from ffmpy import FFmpeg
         ff = FFmpeg(
             global_options='-loglevel panic',
             inputs={infile_name: None},

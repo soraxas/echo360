@@ -4,8 +4,9 @@ import os
 import sys
 
 from datetime import datetime
-from EchoCourse import EchoCourse
-from EchoDownloader import EchoDownloader
+from usydecho360.EchoCourse import EchoCourse
+from usydecho360.EchoDownloader import EchoDownloader
+import usydecho360.phantomjs_binary_downloader as pbd
 
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
@@ -58,22 +59,14 @@ def handle_args():
     args = vars(parser.parse_args())
     course_uuid = args["uuid"]
 
-    output_path = os.path.expanduser(args["output"]) if args["output"] is not None else ""
-    output_path = output_path if os.path.isdir(output_path) else ""
+    output_path = os.path.expanduser(args["output"]) if args["output"] is not None else "default_out_path"
+    output_path = output_path if os.path.isdir(output_path) else "default_out_path"
 
     after_date = try_parse_date(args["after_date"], "%Y-%m-%d") if args["after_date"] else _DEFAULT_AFTER_DATE
     before_date = try_parse_date(args["before_date"], "%Y-%m-%d") if args["before_date"] else _DEFAULT_BEFORE_DATE
 
     username = args["unikey"]
     password = args["password"]
-
-    if username is None:
-        if sys.version_info < (3,0): # special handling for python2
-            input = raw_input
-        username = input('Unikey: ')
-    if password is None:
-        import getpass
-        password = getpass.getpass('Passowrd for {0}: '.format(username))
 
     return (course_uuid, output_path, after_date, before_date, username, password)
 
@@ -91,4 +84,12 @@ def _blow_up(self, str, e):
 
 
 if __name__ == '__main__':
-    main()
+    # First test for existance of phantomjs binary file
+    if not os.path.isfile(pbd.get_phantomjs_bin()):
+        # Initiate downloading binary file
+        print('='*60)
+        print('  Binary file of PhantomJS not found, will initiate a downloading process now...')
+        pbd.download()
+        print('='*60)
+    else:
+        main()

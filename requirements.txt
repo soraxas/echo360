@@ -3,3 +3,4 @@ selenium>=2.44.0
 ffmpy>=0.2.2
 requests>=2.8.14
 gevent>=1.2.2
+wget>=3.2
