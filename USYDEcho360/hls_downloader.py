@@ -3,7 +3,7 @@
 from gevent import monkey
 monkey.patch_all()
 from gevent.pool import Pool
-from ffmpy import FFmpeg
+import ffmpy
 import gevent
 import requests
 import os, sys
@@ -89,18 +89,23 @@ class Downloader:
             print("Failed status code: {}".format(r.status_code))
         infile_name = os.path.join(self.dir, self._result_file_name.split('.')[0]+'_all.'+self.result_file_name.split('.')[-1])
         outfile_name = infile_name.split('.')[0] + '.mp4'
-        sys.stdout.write('  > Converting to mp4 format... ')
+        sys.stdout.write('  > Converting to mp4... ')
         sys.stdout.flush()
-        ff = FFmpeg(
-            global_options='-loglevel panic',
-            inputs={infile_name: None},
-            outputs={outfile_name: ['-c','copy']}
-        )
-        ff.run()
-        # delete source file after done
-        os.remove(infile_name)
-        self._result_file_name = outfile_name
-        print('Done!')
+        try:
+            ff = ffmpy.FFmpeg(
+                global_options='-loglevel panic',
+                inputs={infile_name: None},
+                outputs={outfile_name: ['-c','copy']}
+            )
+            ff.run()
+            # delete source file after done
+            os.remove(infile_name)
+            self._result_file_name = outfile_name
+            print('Done!')
+        except ffmpy.FFExecutableNotFoundError:
+            print('Skipping! Because "ffmpeg" not installed.')
+            self._result_file_name = infile_name
+
 
     def _download(self, ts_list):
         self.pool.map(self._worker, ts_list)

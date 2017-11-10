@@ -35,7 +35,7 @@ class EchoDownloader(object):
         self._course.set_driver(self._driver)
 
         # Initialize to establish the 'anon' cookie that Echo360 sends.
-        sys.stdout.write('Logging into "{0}"... '.format(self._course.url))
+        sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
         sys.stdout.flush()
         self._driver.get(self._course.url)
 
@@ -91,7 +91,7 @@ class EchoDownloader(object):
         self._videos = []
 
     def download_all(self):
-        sys.stdout.write('Retrieving echo360 Course Info... ')
+        sys.stdout.write('>> Retrieving echo360 Course Info... ')
         sys.stdout.flush()
         videos = self._course.get_videos().videos
         print('Done!')
@@ -126,14 +126,16 @@ class EchoDownloader(object):
         echo360_downloader.run(video, self._output_dir)
 
         # rename file
-        os.rename(os.path.join(echo360_downloader.result_file_name), os.path.join(self._output_dir, filename))
+        ext = echo360_downloader.result_file_name
+        ext = ext[ext.rfind('.')+1:]
+        os.rename(os.path.join(echo360_downloader.result_file_name), os.path.join(self._output_dir, '{0}.{1}'.format(filename, ext)))
         print('-'*60)
 
     def _initialize(self, echo_course):
         self._driver.get(self._course.url)
 
     def _get_filename(self, course, date, title):
-        return "{} - {} - {}.mp4".format(course, date, title)
+        return "{} - {} - {}".format(course, date, title)
 
     def _in_date_range(self, date_string):
         the_date = dateutil.parser.parse(date_string).date()
