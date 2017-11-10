@@ -1,7 +1,6 @@
 import dateutil.parser
 import os
 import sys
-import urllib.request, urllib.error, urllib.parse
 
 from selenium import webdriver
 import selenium

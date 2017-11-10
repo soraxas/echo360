@@ -5,9 +5,17 @@ monkey.patch_all()
 from gevent.pool import Pool
 import gevent
 import requests
-from urllib.parse import urljoin
 import os
 import time
+
+def urljoin(a, b):
+    # add a slash if needed
+    if a[-1] != '/':
+        a += '/'
+    # remove a slash if needed
+    if b[0] == '/':
+        b = b[1:]
+    return a + b
 
 class Downloader:
     def __init__(self, pool_size, retry=3):
