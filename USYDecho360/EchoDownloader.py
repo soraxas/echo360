@@ -152,7 +152,7 @@ class EchoDownloader(object):
 
     def _find_pos(self, videos, the_video):
         for i, video in enumerate(videos):
-            if video.date == the_video.date:
+            if video == the_video: # compare by object id, because date could possibly be the same in some case.
                 return i
 
     def success_msg(self, course_name, videos):
