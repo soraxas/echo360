@@ -108,14 +108,10 @@ if __name__ == '__main__':
     # First test for existance of local phantomjs binary file
     if not os.path.isfile(pbd.get_phantomjs_bin()):
         # If failed, then test for existance of phantomjs in PATH
-        with open(os.devnull, 'w')  as FNULL:
-            try:
-                subprocess.check_output(['phantomjs','.'], stderr=FNULL)
-            except OSError:
-                # None exists, download binary file
-                # Initiate downloading binary file
-                download_phantomjs_binary()
-            except subprocess.CalledProcessError:
-                # expected behaviour if binary exists
-                use_local_binary = False
+        cmd_exists = lambda x: any(os.access(os.path.join(path, x), os.X_OK) for path in os.environ["PATH"].split(os.pathsep))
+        if cmd_exists('phantomjs'):
+            use_local_binary = False
+        else:
+            # None exists, download binary file
+            download_phantomjs_binary()
     main(use_local_binary)
