@@ -52,3 +52,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# appp specific folders
+bin/
+default_out_path/

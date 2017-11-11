@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import subprocess
 
 from datetime import datetime
 from USYDecho360.EchoCourse import EchoCourse
@@ -55,6 +56,12 @@ def handle_args():
                         help="Your password for your University of \
                               Sydney elearning account",
                         metavar="PASSWORD")
+    parser.add_argument("--download-phantomjs-binary",
+                        action='store_true',
+                        default=False,
+                        dest="download_binary",
+                        help="Force the usydEcho360.py script to download a local \
+                              binary file for phantomjs (will override system bin)")
 
     args = vars(parser.parse_args())
     course_uuid = args["uuid"]
@@ -68,13 +75,17 @@ def handle_args():
     username = args["unikey"]
     password = args["password"]
 
-    return (course_uuid, output_path, after_date, before_date, username, password)
+    return (course_uuid, output_path, after_date, before_date, username, password, args['download_binary'])
 
-def main():
-    course_uuid, output_path, after_date, before_date, username, password = handle_args()
+def main(use_local_binary):
+    course_uuid, output_path, after_date, before_date, username, password, download_binary = handle_args()
+
+    if download_binary:
+        download_phantomjs_binary(manual=True)
+        exit(0)
 
     course = EchoCourse(course_uuid)
-    downloader = EchoDownloader(course, output_path, date_range=(after_date, before_date), username=username, password=password)
+    downloader = EchoDownloader(course, output_path, date_range=(after_date, before_date), username=username, password=password, use_local_binary=use_local_binary)
     downloader.download_all()
 
 def _blow_up(self, str, e):
@@ -82,15 +93,29 @@ def _blow_up(self, str, e):
     print("Exception: {}".format(str(e)))
     sys.exit(1)
 
+def download_phantomjs_binary(manual=False):
+    print('='*65)
+    if not manual:
+        print('Binary file of PhantomJS not found, will initiate a download process now...')
+    pbd.download()
+    print('Done!')
+    print('='*65)
 
 if __name__ == '__main__':
-    # First test for existance of phantomjs binary file
+    # NOTE: local binary will always override system PATH binary
+    use_local_binary = True
+
+    # First test for existance of local phantomjs binary file
     if not os.path.isfile(pbd.get_phantomjs_bin()):
-        # Initiate downloading binary file
-        print('='*65)
-        print('Binary file of PhantomJS not found, will initiate a download process now...')
-        pbd.download()
-        print('Done!')
-        print('='*65)
-    else:
-        main()
+        # If failed, then test for existance of phantomjs in PATH
+        with open(os.devnull, 'w')  as FNULL:
+            try:
+                subprocess.check_output(['phantomjs','.'], stderr=FNULL)
+            except OSError:
+                # None exists, download binary file
+                # Initiate downloading binary file
+                download_phantomjs_binary()
+            except subprocess.CalledProcessError:
+                # expected behaviour if binary exists
+                use_local_binary = False
+    main(use_local_binary)

@@ -10,7 +10,7 @@ from USYDecho360.hls_downloader import Downloader
 
 class EchoDownloader(object):
 
-    def __init__(self, course, output_dir, date_range, username, password):
+    def __init__(self, course, output_dir, date_range, username, password, use_local_binary=False):
         self._course = course
         if output_dir == '':
             output_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -27,8 +27,11 @@ class EchoDownloader(object):
             "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
             "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         )
-        from USYDecho360.phantomjs_binary_downloader import get_phantomjs_bin
-        self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap)
+        if use_local_binary:
+            from USYDecho360.phantomjs_binary_downloader import get_phantomjs_bin
+            self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap)
+        else:
+            self._driver = webdriver.PhantomJS(desired_capabilities=dcap)
 
 
         # Monkey Patch, set the course's driver to the one from downloader

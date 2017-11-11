@@ -44,8 +44,11 @@ def download():
     import wget
     link, filename = get_download_link()
     bin_path = get_bin_root_path()
-    if not os.path.exists(bin_path): # create bin directory if not exists
-        os.makedirs(bin_path)
+    # delete bin directory if exists
+    if os.path.exists(bin_path):
+        shutil.rmtree(bin_path)
+    os.makedirs(bin_path)
+    # remove existing binary file or folder
     wget.download(link, out='{0}/{1}'.format(bin_path, filename))
     print('>> Extracting archive file "{0}"'.format(filename))
     if sys.version_info >= (3,0): # compatibility for python 2 & 3
