@@ -98,6 +98,9 @@ class EchoDownloader(object):
         sys.stdout.flush()
         videos = self._course.get_videos().videos
         print('Done!')
+        # change the output directory to be inside a folder named after the course
+        self._output_dir += '/{0} - {1}'.format(self._course.course_id, self._course.course_name)
+        #
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         print('=' * 60)
         print('    Course: {0} - {1}'.format(self._course.course_id, self._course.course_name))
@@ -105,7 +108,7 @@ class EchoDownloader(object):
         print('=' * 60)
 
         downloaded_videos = []
-        for i, video in reversed(list(enumerate(filtered_videos))):
+        for video in reversed(list(filtered_videos)):
             lecture_number = self._find_pos(videos, video)
             title = "Lecture {}".format(lecture_number+1)
             filename = self._get_filename(self._course.course_id, video.date, title)
