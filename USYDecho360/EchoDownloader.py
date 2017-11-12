@@ -2,9 +2,10 @@ import dateutil.parser
 import os
 import sys
 
-from selenium import webdriver
 import selenium
+from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.by import By
 
 from USYDecho360.hls_downloader import Downloader
 
@@ -16,6 +17,8 @@ class EchoDownloader(object):
             output_dir = os.path.dirname(os.path.realpath(__file__))
         self._output_dir = output_dir
         self._date_range = date_range
+        self._username = username
+        self._password = password
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
         log_path = '{0}/phantomjs_service.log'.format(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
@@ -35,68 +38,68 @@ class EchoDownloader(object):
             self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap, service_log_path=log_path)
         else:
             self._driver = webdriver.PhantomJS(desired_capabilities=dcap, service_log_path=log_path)
-
-
         # Monkey Patch, set the course's driver to the one from downloader
         self._course.set_driver(self._driver)
+        self._videos = []
 
+    def login(self):
         # Initialize to establish the 'anon' cookie that Echo360 sends.
-        sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
-        sys.stdout.flush()
         self._driver.get(self._course.url)
-
-        # first try if we can access content without login
+        # First see if we have successfully access course page without the need to login
         # for example: https://view.streaming.sydney.edu.au:8443/ess/portal/section/ed9b26eb-a785-4f4e-bd51-69f3faab388a
-        try:
-            self._driver.find_element_by_id('j_username')
-            # should show raise exception here if it does not need to login...
-
-            # retrieve username / password if not given before
-            if username is None or password is None:
-                print('Credentials needed...')
-                if username is None:
-                    if sys.version_info < (3,0): # special handling for python2
-                        input = raw_input
-                    else:
-                        from builtins import input
-                    username = input('Unikey: ')
-                if password is None:
-                    import getpass
-                    password = getpass.getpass('Passowrd for {0}: '.format(username))
-            # Input username and password:
-            user_name = self._driver.find_element_by_id('j_username')
-            user_name.clear()
-            user_name.send_keys(username)
-
-            user_passwd = self._driver.find_element_by_id('j_password')
-            user_passwd.clear()
-            user_passwd.send_keys(password)
-
-            login_btn = self._driver.find_element_by_id('login-btn')
-            login_btn.submit()
-
-            # test if the login is success
-            try:
-                self._driver.find_element_by_id('j_username')
-            except selenium.common.exceptions.NoSuchElementException:
-                print('Done!')
-            else:
-                print('Failed!')
-                print('  > Failed to login, is your username/password correct...?')
-                exit(1)
-
-        except selenium.common.exceptions.NoSuchElementException:
-            if self._driver.page_source.strip() == '<html><head></head><body></body></html>':
+        if self._driver.find_elements_by_id('j_username'):
+            self.loginWithCredentials()
+        else:
+            # check if it is network error
+            if '<html><head></head><body></body></html>' in self._driver.page_source:
                 print('Failed!')
                 print('  > Failed to connect to server, is your internet working...?')
                 exit(1)
-            print('Done!')
-            print('INFO: No need to login :)')
+            elif 'check your URL' in self._driver.page_source:
+                print('Failed!')
+                print('  > Failed to connet to course page, is the uuid correct...?')
+                exit(1)
+            else:
+                # Should be only for the case where login details is not required left
+                print('INFO: No need to login :)')
+        print('Done!')
 
-        # print(self._driver.page_source)
-        self._videos = []
+    def loginWithCredentials(self):
+        # retrieve username / password if not given before
+        if self._username is None or self._password is None:
+            print('Credentials needed...')
+            if self._username is None:
+                if sys.version_info < (3,0): # special handling for python2
+                    input = raw_input
+                else:
+                    from builtins import input
+                self._username = input('Unikey: ')
+            if self._password is None:
+                import getpass
+                self._password = getpass.getpass('Passowrd for {0}: '.format(self._username))
+        # Input username and password:
+        user_name = self._driver.find_element_by_id('j_username')
+        user_name.clear()
+        user_name.send_keys(self._username)
+
+        user_passwd = self._driver.find_element_by_id('j_password')
+        user_passwd.clear()
+        user_passwd.send_keys(self._password)
+
+        login_btn = self._driver.find_element_by_id('login-btn')
+        login_btn.submit()
+
+        # test if the login is success
+        if self._driver.find_elements_by_id('j_username'):
+            print('Failed!')
+            print('  > Failed to login, is your username/password correct...?')
+            exit(1)
+
 
     def download_all(self):
+        sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
+        sys.stdout.flush()
+        self.login()
         sys.stdout.write('>> Retrieving echo360 Course Info... ')
         sys.stdout.flush()
         videos = self._course.get_videos().videos
