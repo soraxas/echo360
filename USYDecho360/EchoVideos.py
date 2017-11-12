@@ -6,6 +6,14 @@ import selenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import StaleElementReferenceException
+
+def update_course_retrieval_progress(current, total):
+    prefix = '>> Retrieving echo360 Course Info... '
+    status = "{}/{} videos".format(current, total)
+    text = "\r{0} {1} ".format(prefix, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 class EchoVideos(object):
 
@@ -13,9 +21,13 @@ class EchoVideos(object):
         assert(videos_json is not None)
         self._driver = driver
         self._videos = []
-        for video_json in videos_json:
+        total_videos_num = len(videos_json)
+        update_course_retrieval_progress(0, total_videos_num)
+
+        for i, video_json in enumerate(videos_json):
             video_date = EchoVideo.get_date(video_json)
             self._videos.append(EchoVideo(video_json, self._driver))
+            update_course_retrieval_progress(i+1, total_videos_num)
 
         self._videos.sort(key=operator.attrgetter("date"))
 
@@ -41,27 +53,39 @@ class EchoVideo(object):
 
             self._driver.get(video_url)
 
-            # wait for maximum 90 second before timeout
-            waitsecond = 90
-            try:
-                WebDriverWait(self._driver, waitsecond).until(
-                EC.presence_of_element_located((By.ID, "content-player"))
-                )
-            except selenium.common.exceptions.TimeoutException:
-                print('ERROR: Connection timeouted after {} second... Possibly internet problem?'.format(waitsecond))
-                exit(1)
-            #
-            # finally:
-            #     self._driver.quit()
-
-            m3u8_url = self._driver.find_element_by_id('content-player').find_element_by_tag_name('video').get_attribute('src')
-
+            m3u8_url = self._loop_find_m3u8_url(video_url, waitsecond=30)
             self._url = m3u8_url
 
             date = dateutil.parser.parse(video_json["startTime"]).date()
             self._date = date.strftime("%Y-%m-%d")
         except KeyError as e:
             self._blow_up("Unable to parse video data from JSON (course_data)", e)
+
+    def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
+        stale_attempt = 1
+        refresh_attempt = 1
+        while True:
+            self._driver.get(video_url)
+            try:
+                # wait for maximum second before timeout
+                WebDriverWait(self._driver, waitsecond).until(
+                    EC.presence_of_element_located((By.ID, "content-player"))
+                )
+                return self._driver.find_element_by_id(
+                    'content-player').find_element_by_tag_name(
+                        'video').get_attribute('src')
+            except selenium.common.exceptions.TimeoutException:
+                if refresh_attempt >= max_attempts:
+                    print('\r\nERROR: Connection timeouted after {} second for {} attempts... \
+                          Possibly internet problem?'.format(waitsecond, max_attempts))
+                    raise
+                refresh_attempt += 1
+            except StaleElementReferenceException:
+                if stale_attempt >= max_attempts:
+                    print('\r\nERROR: Elements are not stable to retrieve after {} attempts... \
+                        Possibly internet problem?'.format(max_attempts))
+                    raise
+                stale_attempt += 1
 
     @property
     def date(self):
