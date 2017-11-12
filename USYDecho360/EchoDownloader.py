@@ -18,7 +18,7 @@ class EchoDownloader(object):
         self._date_range = date_range
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
-        log_path = '{0}/phantomjs_service.log'.format(os.path.dirname(os.path.realpath(__file__)))
+        log_path = '{0}/phantomjs_service.log'.format(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
 
         # self._useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36"
 
