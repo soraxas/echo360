@@ -3,43 +3,39 @@
 import sys, os
 import shutil
 
-PHANTOMJS_DOWNLOAD_LINK_ROOT = 'https://bitbucket.org/ariya/phantomjs/downloads'
-PHANTOMJS_VERSION = '2.1.1'
+CHROMEDRIVER_DOWNLOAD_LINK_ROOT = 'https://chromedriver.storage.googleapis.com'
+CHROMEDRIVER_VERSION = '2.33'
 
 def get_os_suffix():
     if 'linux' in sys.platform:
         arch = '64' if sys.maxsize > 2**32 else '32'
         if arch == '64':
-            return 'linux-x86_64'
+            return 'linux64'
         else:
-            return 'linux-i686'
+            return 'linux32'
     elif 'win32' in sys.platform:
-        return 'windows'
+        return 'win32'
     elif 'darwin' in sys.platform:
-        return 'macosx'
+        return 'mac64'
     else:
         raise Exception('NON-EXISTING OS VERSION')
 
 def get_download_link():
     os_suffix = get_os_suffix()
-    filename = 'phantomjs-{0}-{1}'.format(PHANTOMJS_VERSION, os_suffix)
-    if 'linux' in os_suffix:
-        filename = '{0}.tar.bz2'.format(filename)
-    else:
-        filename = '{0}.zip'.format(filename)
-    download_link = '{0}/{1}'.format(PHANTOMJS_DOWNLOAD_LINK_ROOT, filename)
+    filename = 'chromedriver_{0}.zip'.format(os_suffix)
+    download_link = '{0}/{1}/{2}'.format(CHROMEDRIVER_DOWNLOAD_LINK_ROOT, CHROMEDRIVER_VERSION, filename)
     return download_link, filename
 
 def get_bin_root_path():
     return '{0}/bin'.format(os.getcwd())
 
-def get_phantomjs_bin():
-    extension = '.exe' if 'windows' in get_os_suffix() else ''
-    return '{0}/phantomjs-{1}-{2}/bin/phantomjs{3}'.format(get_bin_root_path(), PHANTOMJS_VERSION, get_os_suffix(), extension)
+def get_bin():
+    extension = '.exe' if 'win' in get_os_suffix() else ''
+    return '{0}/chromedriver{1}'.format(get_bin_root_path(), extension)
 
 
 def download():
-    print('>> Downloading binary file for "{0}"'.format(get_os_suffix()))
+    print('>> Downloading chrome binary file for "{0}"'.format(get_os_suffix()))
     # Download bin for this os
     import wget
     link, filename = get_download_link()

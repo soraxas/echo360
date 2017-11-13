@@ -33,17 +33,25 @@ class EchoDownloader(object):
             "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
             "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         )
+        if use_local_binary:
+            if use_chrome:
+                from USYDecho360.binary_downloader.chromedriver import get_bin
+            else:
+                from USYDecho360.binary_downloader.phantomjs import get_bin
+            kwargs = {'executable_path' : get_bin(),
+                      'desired_capabilities':dcap,
+                      'service_log_path':log_path}
+        else:
+            kwargs = {}
         if use_chrome:
             from selenium.webdriver.chrome.options import Options
             opts = Options()
             opts.add_argument("user-agent={}".format(self._useragent))
-            self._driver = webdriver.Chrome(desired_capabilities=dcap, service_log_path=log_path, chrome_options=opts)
+            kwargs['chrome_options'] = opts
+            self._driver = webdriver.Chrome(**kwargs)
         else:
-            if use_local_binary:
-                from USYDecho360.phantomjs_binary_downloader import get_phantomjs_bin
-                self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap, service_log_path=log_path)
-            else:
-                self._driver = webdriver.PhantomJS(desired_capabilities=dcap, service_log_path=log_path)
+            self._driver = webdriver.PhantomJS(**kwargs)
+
         # Monkey Patch, set the course's driver to the one from downloader
         self._course.set_driver(self._driver)
         self._videos = []

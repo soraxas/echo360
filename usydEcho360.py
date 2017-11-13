@@ -7,7 +7,7 @@ import subprocess
 from datetime import datetime
 from USYDecho360.EchoCourse import EchoCourse
 from USYDecho360.EchoDownloader import EchoDownloader
-import USYDecho360.phantomjs_binary_downloader as pbd
+
 
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
@@ -86,21 +86,27 @@ def handle_args():
 def main():
     course_uuid, output_path, after_date, before_date, username, password, download_binary, use_chrome = handle_args()
 
+    cmd_exists = lambda x: any(os.access(os.path.join(path, x), os.X_OK) for path in os.environ["PATH"].split(os.pathsep))
     # NOTE: local binary will always override system PATH binary
     use_local_binary = True
 
-    # First test for existance of local phantomjs binary file
-    if not os.path.isfile(pbd.get_phantomjs_bin()):
-        # If failed, then test for existance of phantomjs in PATH
-        cmd_exists = lambda x: any(os.access(os.path.join(path, x), os.X_OK) for path in os.environ["PATH"].split(os.pathsep))
-        if cmd_exists('phantomjs'):
+    if use_chrome:
+        import USYDecho360.binary_downloader.chromedriver as binary_downloader
+        binary_type = 'chromedriver'
+    else:
+        import USYDecho360.binary_downloader.phantomjs as binary_downloader
+        binary_type = 'phantomjs'
+    # First test for existance of localbinary file
+    if not os.path.isfile(binary_downloader.get_bin()):
+        # If failed, then test for existance of global executable in PATH
+        if cmd_exists('chromedriver'):
             use_local_binary = False
         else:
             # None exists, download binary file
-            download_phantomjs_binary()
+            start_download_binary(binary_downloader, binary_type)
 
     if download_binary:
-        download_phantomjs_binary(manual=True)
+        start_download_binary(binary_downloader, binary, manual=True)
         exit(0)
 
     course = EchoCourse(course_uuid)
@@ -108,6 +114,9 @@ def main():
                                 username=username, password=password,
                                 use_local_binary=use_local_binary,
                                 use_chrome=use_chrome)
+    print('>>>  Download will use "{}" webdriver from {} executable  <<<'.format(
+           'ChromeDriver' if use_chrome else 'PhantomJS',
+           'LOCAL' if use_local_binary else 'GLOBAL'))
     downloader.download_all()
 
 def _blow_up(self, str, e):
@@ -115,11 +124,11 @@ def _blow_up(self, str, e):
     print("Exception: {}".format(str(e)))
     sys.exit(1)
 
-def download_phantomjs_binary(manual=False):
+def start_download_binary(binary_downloader, binary_type, manual=False):
     print('='*65)
     if not manual:
-        print('Binary file of PhantomJS not found, will initiate a download process now...')
-    pbd.download()
+        print('Binary file of {0} not found, will initiate a download process now...'.format(binary_type))
+    binary_downloader.download()
     print('Done!')
     print('='*65)
 
