@@ -105,6 +105,9 @@ class Downloader:
         except ffmpy.FFExecutableNotFoundError:
             print('Skipping! Because "ffmpeg" not installed.')
             self._result_file_name = infile_name
+        except ffmpy.FFRuntimeError:
+            print('Error! ffmpeg exited with non-zero status code.')
+            self._result_file_name = infile_name
 
 
     def _download(self, ts_list):
