@@ -17,6 +17,7 @@ def get_os_suffix():
         return 'windows'
     elif 'darwin' in sys.platform:
         # Temporarily solution for an issue with mac osx: https://github.com/ariya/phantomjs/issues/14066
+        global PHANTOMJS_VERSION
         PHANTOMJS_VERSION = '1.9.8'
         return 'macosx'
     else:
@@ -52,7 +53,7 @@ def download():
     os.makedirs(bin_path)
     # remove existing binary file or folder
     wget.download(link, out='{0}/{1}'.format(bin_path, filename))
-    print('>> Extracting archive file "{0}"'.format(filename))
+    print('\r\n>> Extracting archive file "{0}"'.format(filename))
     if sys.version_info >= (3,0): # compatibility for python 2 & 3
         shutil.unpack_archive('{0}/{1}'.format(bin_path, filename), extract_dir=bin_path)
     else:
