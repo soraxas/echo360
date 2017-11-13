@@ -62,6 +62,12 @@ def handle_args():
                         dest="download_binary",
                         help="Force the usydEcho360.py script to download a local \
                               binary file for phantomjs (will override system bin)")
+    parser.add_argument("--chrome",
+                        action='store_true',
+                        default=False,
+                        dest="use_chrome",
+                        help="Use Chrome Driver instead of phantomjs webdriver. You \
+                              must have chromedriver installed in your PATH.")
 
     args = vars(parser.parse_args())
     course_uuid = args["uuid"]
@@ -75,17 +81,33 @@ def handle_args():
     username = args["unikey"]
     password = args["password"]
 
-    return (course_uuid, output_path, after_date, before_date, username, password, args['download_binary'])
+    return (course_uuid, output_path, after_date, before_date, username, password, args['download_binary'], args['use_chrome'])
 
-def main(use_local_binary):
-    course_uuid, output_path, after_date, before_date, username, password, download_binary = handle_args()
+def main():
+    course_uuid, output_path, after_date, before_date, username, password, download_binary, use_chrome = handle_args()
+
+    # NOTE: local binary will always override system PATH binary
+    use_local_binary = True
+
+    # First test for existance of local phantomjs binary file
+    if not os.path.isfile(pbd.get_phantomjs_bin()):
+        # If failed, then test for existance of phantomjs in PATH
+        cmd_exists = lambda x: any(os.access(os.path.join(path, x), os.X_OK) for path in os.environ["PATH"].split(os.pathsep))
+        if cmd_exists('phantomjs'):
+            use_local_binary = False
+        else:
+            # None exists, download binary file
+            download_phantomjs_binary()
 
     if download_binary:
         download_phantomjs_binary(manual=True)
         exit(0)
 
     course = EchoCourse(course_uuid)
-    downloader = EchoDownloader(course, output_path, date_range=(after_date, before_date), username=username, password=password, use_local_binary=use_local_binary)
+    downloader = EchoDownloader(course, output_path, date_range=(after_date, before_date),
+                                username=username, password=password,
+                                use_local_binary=use_local_binary,
+                                use_chrome=use_chrome)
     downloader.download_all()
 
 def _blow_up(self, str, e):
@@ -102,16 +124,4 @@ def download_phantomjs_binary(manual=False):
     print('='*65)
 
 if __name__ == '__main__':
-    # NOTE: local binary will always override system PATH binary
-    use_local_binary = True
-
-    # First test for existance of local phantomjs binary file
-    if not os.path.isfile(pbd.get_phantomjs_bin()):
-        # If failed, then test for existance of phantomjs in PATH
-        cmd_exists = lambda x: any(os.access(os.path.join(path, x), os.X_OK) for path in os.environ["PATH"].split(os.pathsep))
-        if cmd_exists('phantomjs'):
-            use_local_binary = False
-        else:
-            # None exists, download binary file
-            download_phantomjs_binary()
-    main(use_local_binary)
+    main()

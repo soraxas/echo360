@@ -16,9 +16,6 @@ def get_os_suffix():
     elif 'win32' in sys.platform:
         return 'windows'
     elif 'darwin' in sys.platform:
-        # Temporarily solution for an issue with mac osx: https://github.com/ariya/phantomjs/issues/14066
-        global PHANTOMJS_VERSION
-        PHANTOMJS_VERSION = '1.9.8'
         return 'macosx'
     else:
         raise Exception('NON-EXISTING OS VERSION')

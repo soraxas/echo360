@@ -11,7 +11,7 @@ from USYDecho360.hls_downloader import Downloader
 
 class EchoDownloader(object):
 
-    def __init__(self, course, output_dir, date_range, username, password, use_local_binary=False):
+    def __init__(self, course, output_dir, date_range, username, password, use_local_binary=False, use_chrome=False):
         self._course = course
         if output_dir == '':
             output_dir = os.path.dirname(os.path.realpath(__file__))
@@ -21,7 +21,7 @@ class EchoDownloader(object):
         self._password = password
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
-        log_path = '{0}/phantomjs_service.log'.format(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+        log_path = '{0}/webdriver_service.log'.format(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
 
         # self._useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36"
 
@@ -33,11 +33,17 @@ class EchoDownloader(object):
             "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
             "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         )
-        if use_local_binary:
-            from USYDecho360.phantomjs_binary_downloader import get_phantomjs_bin
-            self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap, service_log_path=log_path)
+        if use_chrome:
+            from selenium.webdriver.chrome.options import Options
+            opts = Options()
+            opts.add_argument("user-agent={}".format(self._useragent))
+            self._driver = webdriver.Chrome(desired_capabilities=dcap, service_log_path=log_path, chrome_options=opts)
         else:
-            self._driver = webdriver.PhantomJS(desired_capabilities=dcap, service_log_path=log_path)
+            if use_local_binary:
+                from USYDecho360.phantomjs_binary_downloader import get_phantomjs_bin
+                self._driver = webdriver.PhantomJS(executable_path=get_phantomjs_bin(), desired_capabilities=dcap, service_log_path=log_path)
+            else:
+                self._driver = webdriver.PhantomJS(desired_capabilities=dcap, service_log_path=log_path)
         # Monkey Patch, set the course's driver to the one from downloader
         self._course.set_driver(self._driver)
         self._videos = []
@@ -121,6 +127,7 @@ class EchoDownloader(object):
             self._download_as(video.url, filename)
             downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
+        self._driver.close()
 
     @property
     def useragent(self):
