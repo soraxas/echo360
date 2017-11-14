@@ -124,7 +124,7 @@ class EchoDownloader(object):
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         print('=' * 60)
         print('    Course: {0} - {1}'.format(self._course.course_id, self._course.course_name))
-        print('      Total videos to download: {0} out of {1}'.format(len(videos), len(filtered_videos)))
+        print('      Total videos to download: {0} out of {1}'.format(len(filtered_videos), len(videos)))
         print('=' * 60)
 
         downloaded_videos = []
