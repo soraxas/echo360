@@ -13,15 +13,16 @@ class EchoDownloader(object):
 
     def __init__(self, course, output_dir, date_range, username, password, use_local_binary=False, use_chrome=False):
         self._course = course
+        root_path = os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__))
         if output_dir == '':
-            output_dir = os.path.dirname(os.path.realpath(__file__))
+            output_dir = root_path
         self._output_dir = output_dir
         self._date_range = date_range
         self._username = username
         self._password = password
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
-        log_path = '{0}/webdriver_service.log'.format(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+        log_path = os.path.join(root_path, 'webdriver_service.log')
 
         # self._useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36"
 
@@ -119,7 +120,8 @@ class EchoDownloader(object):
         videos = self._course.get_videos().videos
         print('Done!')
         # change the output directory to be inside a folder named after the course
-        self._output_dir += '/{0} - {1}'.format(self._course.course_id, self._course.course_name)
+        self._output_dir = os.path.join(self._output_dir, '{0} - {1}'.format(
+            self._course.course_id, self._course.course_name).strip())	
         #
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         print('=' * 60)
