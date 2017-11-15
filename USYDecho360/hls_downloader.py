@@ -121,20 +121,24 @@ class Downloader:
         url = ts_tuple[0]
         index = ts_tuple[1]
         retry = self.retry
+        update_progress(self.ts_current, self.ts_total, title='  > {}'.format('Progress'))
         while retry:
             try:
                 r = self.session.get(url, timeout=20)
                 if r.ok:
                     file_name = url.split('/')[-1].split('?')[0]
-                    self.ts_current += 1
-                    update_progress(self.ts_current, self.ts_total, title='  > {}'.format('Progress'))
                     with open(os.path.join(self.dir, file_name), 'wb') as f:
                         f.write(r.content)
                     self.succed[index] = file_name
+                    self.ts_current += 1
+                    update_progress(self.ts_current, self.ts_total, title='  > {}'.format('Progress'))
                     return
+            except FileNotFoundError as e:
+                print('\r\nError in writing file: {}'.format(e))
+                exit(1)
             except:
                 retry -= 1
-        print('[FAIL]%s' % url)
+        sys.stdout.write('[FAIL]')
         self.failed.append((url, index))
 
     def _join_file(self):
