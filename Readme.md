@@ -13,26 +13,21 @@ is the particular course's UUID. See the FAQ for tips on how to find it.
 
 Credits to [jhalstead85](https://github.com/jhalstead85/lecho360) for which this script is based upon, but this has been adopted to be usable for USYD echo360.
 
+Updates as of 18/03/2018: It now will works on canvas echo360 as well (https://canvas.sydney.edu.au/).
+
 # Requirements #
 
 ### Python ###
 - Dateutil >= 2.2
 - Selenium >= 2.44.0
-- ffmpy >= 0.2.2
 
 ```
 pip install -r requirements.txt
 ```
 
-### NodeJS ###
-- PhantomJS >= 1.9.7
-
-```
-npm -g install phantomjs
-```
-
-### ffmpeg ###
-This is required for transcoding ts file to mp4 file. See [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg) for a brief instructions of installing it in different OS.
+### Optional ###
+- PhantomJS (will automatically downloaded if needed)
+- ffmpeg (for transcoding ts file to mp4 file) See [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg) for a brief instructions of installing it in different OS.
 
 ### Operating System ###
 - Linux
@@ -40,42 +35,60 @@ This is required for transcoding ts file to mp4 file. See [here](https://github.
 - Windows
 
 # Usage #
-```
->>> python usydEcho360.py
 
-usage: usydEcho360.py [-h] --uuid COURSE_UUID [--output OUTPUT_PATH]
+### Quick Start ###
+```
+>>> python usydEcho360.py                       \
+  --uuid "041698d6-f43a-4b09-a39a-b90475a63530"
+```
+### Script args ###
+```
+>>> usage: usydEcho360.py [-h] --uuid COURSE_UUID [--output OUTPUT_PATH]
                       [--after-date AFTER_DATEYYYY-MM-DD)]
                       [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
-                      [--password PASSWORD]
+                      [--password PASSWORD] [--download-phantomjs-binary]
+                      [--chrome]
 
 Download lectures from USYD's Echo360 portal.
 
 optional arguments:
-  -h, --help                              Show this help message and exit
-
-  --uuid COURSE_UUID,                     Echo360 UUID for the course, which is
-  -u COURSE_UUID                          found in the URL of the course's video
-                                          lecture page.
-
-  --output OUTPUT_PATH,                   Path to the desired output directory.
-  -o OUTPUT_PATH                          The output directory must exist. Otherwise
-                                          the current directory is used.
-
-  --after-date AFTER_DATE(YYYY-MM-DD),    Only download lectures newer than
-  -a AFTER_DATE(YYYY-MM-DD)               AFTER_DATE (inclusive). Note: This may
-                                          be combined with --before-date.
-
-  --before-date BEFORE_DATE(YYYY-MM-DD),  Only download lectures older than
-  -b BEFORE_DATE(YYYY-MM-DD)              BEFORE_DATE (inclusive). Note: This may
-                                          be combined with --after-date.
-
-  --unikey UNIKEY,                        Your unikey for your University of Sydney
-  -k UNIKEY                               elearning account
-
-  --password PASSWORD,                    Your password for your University of Sydney
-  -p PASSWORD                             elearning account
+  -h, --help            show this help message and exit
+  --uuid COURSE_UUID, -u COURSE_UUID
+                        Echo360 UUID for the course, which is found in the URL
+                        of the course's video lecture page (e.g.
+                        '115f3def-7371-4e98-b72f-6efe53771b2a' in http://recor
+                        dings.engineering.illinois.edu/ess/portal/section/115f
+                        3def-7371-4e98-b72f-6efe53771b2a)
+  --output OUTPUT_PATH, -o OUTPUT_PATH
+                        Path to the desired output directory The output
+                        directory must exist. Otherwise the current directory
+                        is used.
+  --after-date AFTER_DATE(YYYY-MM-DD), -a AFTER_DATE(YYYY-MM-DD)
+                        Only download lectures newer than AFTER_DATE
+                        (inclusive). Note: this may be combined with --before-
+                        date.
+  --before-date BEFORE_DATE(YYYY-MM-DD), -b BEFORE_DATE(YYYY-MM-DD)
+                        Only download lectures older than BEFORE_DATE
+                        (inclusive). Note: this may be combined with --after-
+                        date
+  --unikey UNIKEY, -k UNIKEY
+                        Your unikey for your University of Sydney elearning
+                        account
+  --password PASSWORD, -p PASSWORD
+                        Your password for your University of Sydney elearning
+                        account
+  --download-phantomjs-binary
+                        Force the usydEcho360.py script to download a local
+                        binary file for phantomjs (will override system bin)
+  --chrome              Use Chrome Driver instead of phantomjs webdriver. You
+                        must have chromedriver installed in your PATH.
 ```
 # Examples #
+```
+>>> python usydEcho360.py                       \
+--uuid "041698d6-f43a-4b09-a39a-b90475a63530" \
+--ouput "~/Lectures"
+```
 
 ### Download all available lectures ###
 ```
@@ -107,6 +120,14 @@ python usydEcho360.py                           \
   --ouput "~/Lectures"                          \
   --after-date "2014-08-26"                     \
   --before-date "2014-10-14"
+```
+
+### Use chrome driver (instead of phantomjs) ###
+Note: sometime it works better than phantomjs in some system
+```
+>>> python usydEcho360.py                       \
+  --uuid "041698d6-f43a-4b09-a39a-b90475a63530" \
+  --chrome
 ```
 
 # FAQ #
