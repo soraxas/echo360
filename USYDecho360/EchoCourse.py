@@ -15,8 +15,6 @@ class EchoCourse(object):
         self._driver = None
 
         self._hostname = "https://view.streaming.sydney.edu.au:8443"
-        self._url = "{}/ess/portal/section/{}".format(self._hostname, self._uuid)
-        self._video_url = "{}/ess/client/api/sections/{}/section-data.json?pageSize=100".format(self._hostname, self._uuid)
 
     def get_videos(self):
         if self._driver is None:
@@ -41,19 +39,19 @@ class EchoCourse(object):
 
     @property
     def url(self):
-        return self._url
+        return "{}/ess/portal/section/{}".format(self._hostname, self._uuid)
 
     @property
     def video_url(self):
-        return self._video_url
+        return "{}/ess/client/api/sections/{}/section-data.json?pageSize=100".format(self._hostname, self._uuid)
 
     @property
     def course_id(self):
         if self._course_id == "":
             try:
                 # driver = webdriver.PhantomJS() #TODO Redo this. Maybe use a singleton factory to request the lecho360 driver?s
-                self.driver.get(self._url) # Initialize to establish the 'anon' cookie that Echo360 sends.
-                self.driver.get(self._video_url)
+                self.driver.get(self.url) # Initialize to establish the 'anon' cookie that Echo360 sends.
+                self.driver.get(self.video_url)
                 course_data_json = self._get_course_data()
 
                 self._course_id = course_data_json["section"]["course"]["identifier"]
