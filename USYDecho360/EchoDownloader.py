@@ -110,6 +110,15 @@ class EchoDownloader(object):
             print('  > Failed to login, is your username/password correct...?')
             exit(1)
 
+        # hot patch for cavas (canvas.sydney.edu.au) where uuid is hidden in page source
+        # we detect it by trying to retrieve the real uuid
+        import re
+        uuid = re.search('/ess/client/section/([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})',
+                         self._driver.page_source)
+        if uuid is not None:
+            uuid = uuid.groups()[0]
+            self._course._uuid = uuid
+
 
     def download_all(self):
         sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
@@ -121,7 +130,7 @@ class EchoDownloader(object):
         print('Done!')
         # change the output directory to be inside a folder named after the course
         self._output_dir = os.path.join(self._output_dir, '{0} - {1}'.format(
-            self._course.course_id, self._course.course_name).strip())	
+            self._course.course_id, self._course.course_name).strip())
         #
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         print('=' * 60)
