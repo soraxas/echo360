@@ -4,11 +4,13 @@ PYTHON=python
 VENV=echo360venv
 
 if [ ! -d "$VENV" ]; then
-  echo Creating python virtual environment in "$VENV/"
+  echo Creating python virtual environment in "$VENV/"...
   $PYTHON -m venv $VENV
-  echo Installing all pip dependency inside venv...
   source $VENV/bin/activate
-  pip install -r requirements.txt
+  echo Upgrading pip...
+  $PYTHON -m pip install --upgrade pip
+  echo Installing all pip dependency inside venv...
+  $PYTHON -m pip install -r requirements.txt
 fi
 
 if [ $? -ne 0 ]; then
