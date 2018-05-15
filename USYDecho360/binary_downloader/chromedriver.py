@@ -4,7 +4,7 @@ import sys, os
 import shutil
 
 CHROMEDRIVER_DOWNLOAD_LINK_ROOT = 'https://chromedriver.storage.googleapis.com'
-CHROMEDRIVER_VERSION = '2.33'
+CHROMEDRIVER_VERSION = '2.38'
 
 def get_os_suffix():
     if 'linux' in sys.platform:
