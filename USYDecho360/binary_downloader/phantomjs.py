@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys, os, stat
 import shutil
 
 PHANTOMJS_DOWNLOAD_LINK_ROOT = 'https://bitbucket.org/ariya/phantomjs/downloads'
@@ -62,3 +62,6 @@ def download():
             import tarfile
             with tarfile.open('{0}/{1}'.format(bin_path, filename)) as tar:
                 tar.extractall(path=bin_path)
+    # Make the extracted bin executable
+    st = os.stat(get_bin())
+    os.chmod(get_bin(), st.st_mode | stat.S_IEXEC)
