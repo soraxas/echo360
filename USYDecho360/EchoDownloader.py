@@ -2,12 +2,11 @@ import dateutil.parser
 import os
 import sys
 
-import selenium
+from USYDecho360.hls_downloader import Downloader
+
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.common.by import By
 
-from USYDecho360.hls_downloader import Downloader
 
 class EchoDownloader(object):
 
@@ -94,11 +93,12 @@ class EchoDownloader(object):
                 self._password = getpass.getpass('Passowrd for {0}: '.format(self._username))
         # Input username and password:
         user_name = self._driver.find_element_by_id('j_username')
-        user_name.clear()
+        print(user_name)
+#        user_name.clear()
         user_name.send_keys(self._username)
 
         user_passwd = self._driver.find_element_by_id('j_password')
-        user_passwd.clear()
+#        user_passwd.clear()
         user_passwd.send_keys(self._password)
 
         login_btn = self._driver.find_element_by_id('login-btn')
@@ -118,7 +118,6 @@ class EchoDownloader(object):
         if uuid is not None:
             uuid = uuid.groups()[0]
             self._course._uuid = uuid
-
 
     def download_all(self):
         sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))

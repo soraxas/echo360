@@ -1,17 +1,15 @@
 import argparse
-import json
 import os
 import sys
-import subprocess
 
 from datetime import datetime
 from USYDecho360.EchoCourse import EchoCourse
 from USYDecho360.EchoDownloader import EchoDownloader
 
 
-
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
+
 
 def try_parse_date(date_string, fmt):
     try:
@@ -20,10 +18,10 @@ def try_parse_date(date_string, fmt):
         print("Error parsing date input:", sys.exc_info())
         sys.exit(1)
 
+
 def handle_args():
     parser = argparse.ArgumentParser(description="Download lectures from USYD's Echo360 portal.")
-    parser.add_argument("--uuid", "-u",
-                        required=True,
+    parser.add_argument("uuid",
                         help="Echo360 UUID for the course, which is found in \
                               the URL of the course's video lecture page (e.g. \
                               '115f3def-7371-4e98-b72f-6efe53771b2a' in \
@@ -83,6 +81,7 @@ def handle_args():
 
     return (course_uuid, output_path, after_date, before_date, username, password, args['download_binary'], args['use_chrome'])
 
+
 def main():
     course_uuid, output_path, after_date, before_date, username, password, download_binary, use_chrome = handle_args()
 
@@ -119,10 +118,12 @@ def main():
            'LOCAL' if use_local_binary else 'GLOBAL'))
     downloader.download_all()
 
+
 def _blow_up(self, str, e):
     print(str)
     print("Exception: {}".format(str(e)))
     sys.exit(1)
+
 
 def start_download_binary(binary_downloader, binary_type, manual=False):
     print('='*65)
@@ -131,6 +132,7 @@ def start_download_binary(binary_downloader, binary_type, manual=False):
     binary_downloader.download()
     print('Done!')
     print('='*65)
+
 
 if __name__ == '__main__':
     main()

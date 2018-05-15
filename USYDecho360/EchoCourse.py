@@ -1,7 +1,6 @@
 import json
 import sys
 
-from selenium import webdriver
 from USYDecho360.EchoVideos import EchoVideos
 
 
@@ -67,6 +66,7 @@ class EchoCourse(object):
             # trigger getting course_id to get course name as well
             self.course_id
         return self._course_name
+
     @property
     def driver(self):
         if self._driver is None:

@@ -1,5 +1,4 @@
 import dateutil.parser
-import datetime
 import operator
 import sys
 import selenium

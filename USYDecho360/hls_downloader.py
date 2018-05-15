@@ -1,5 +1,3 @@
-#coding: utf-8
-
 from gevent import monkey
 monkey.patch_all()
 from gevent.pool import Pool
@@ -8,6 +6,7 @@ import gevent
 import requests
 import os, sys
 import time
+
 
 def urljoin(a, b):
     # get url relative root path
@@ -39,6 +38,7 @@ def update_progress(current, total, title=None):
     text = "\r{0}: [{1}] {2:.2f}% {3}".format(title, block + " "*(barLength-len(block)), progress*100, status)
     sys.stdout.write(text)
     sys.stdout.flush()
+
 
 class Downloader:
     def __init__(self, pool_size, retry=3):
@@ -109,7 +109,6 @@ class Downloader:
             print('Error! ffmpeg exited with non-zero status code.')
             self._result_file_name = infile_name
 
-
     def _download(self, ts_list):
         self.pool.map(self._worker, ts_list)
         if self.failed:
@@ -164,10 +163,3 @@ class Downloader:
     @property
     def result_file_name(self):
         return self._result_file_name
-
-if __name__ == '__main__':
-    downloader = Downloader(50)
-    # downloader.run('http://m3u8.test.com/test.m3u8', '/home/soraxas/Videos/')
-    #downloader.run('http://delivery.streaming.sydney.edu.au:1935/echo/_definst_/1731/3/ba3eddeb-f00e-405a-98bb-1ed19157ffa8/mp4:audio-vga-streamable.m4v/playlist.m3u8', '/home/soraxas/Videos/')
-    downloader.run('http://delivery.streaming.sydney.edu.au:1935/echo/_definst_/1741/3/1a700a60-d42f-4e24-bd5d-d23d2d8dd134/mp4:audio-vga-streamable.m4v/playlist.m3u8', '/home/soraxas/Videos/')
-    print('DONE')
