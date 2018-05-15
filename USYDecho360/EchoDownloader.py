@@ -46,6 +46,8 @@ class EchoDownloader(object):
         if use_chrome:
             from selenium.webdriver.chrome.options import Options
             opts = Options()
+            opts.add_argument("--headless")
+            opts.add_argument("--window-size=1920x1080")
             opts.add_argument("user-agent={}".format(self._useragent))
             kwargs['chrome_options'] = opts
             self._driver = webdriver.Chrome(**kwargs)
@@ -93,12 +95,11 @@ class EchoDownloader(object):
                 self._password = getpass.getpass('Passowrd for {0}: '.format(self._username))
         # Input username and password:
         user_name = self._driver.find_element_by_id('j_username')
-        print(user_name)
-#        user_name.clear()
+        user_name.clear()
         user_name.send_keys(self._username)
 
         user_passwd = self._driver.find_element_by_id('j_password')
-#        user_passwd.clear()
+        user_passwd.clear()
         user_passwd.send_keys(self._password)
 
         login_btn = self._driver.find_element_by_id('login-btn')

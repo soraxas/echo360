@@ -2,9 +2,9 @@ import argparse
 import os
 import sys
 
-from datetime import datetime
-from USYDecho360.EchoCourse import EchoCourse
 from USYDecho360.EchoDownloader import EchoDownloader
+from USYDecho360.EchoCourse import EchoCourse
+from datetime import datetime
 
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
@@ -44,7 +44,7 @@ def handle_args():
                               (inclusive). Note: this may be combined with \
                               --after-date",
                         metavar="BEFORE_DATE(YYYY-MM-DD)")
-    parser.add_argument("--unikey", "-k",
+    parser.add_argument("--unikey", "-u",
                         dest="unikey",
                         help="Your unikey for your University of \
                               Sydney elearning account",
