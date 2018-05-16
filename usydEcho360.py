@@ -22,7 +22,7 @@ def try_parse_date(date_string, fmt):
 
 
 def handle_args():
-    parser = argparse.ArgumentParser(description="Download lectures from USYD's Echo360 portal.")
+    parser = argparse.ArgumentParser(description="Download lectures from Echo360 portal.")
     parser.add_argument("url",
                         help="Full URL of the echo360 course page, \
                               or only the UUID (which defaults to USYD). \
