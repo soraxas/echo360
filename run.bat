@@ -1,6 +1,6 @@
 @echo off
 set PYTHON=python
-set VENV=echo360venv
+set VENV=_echo360venv
 
 cd "%~dp0"
 

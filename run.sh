@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PYTHON=python
-VENV=echo360venv
+VENV=_echo360venv
 
 if [ ! -d "$VENV" ]; then
   echo Creating python virtual environment in "$VENV/"...
