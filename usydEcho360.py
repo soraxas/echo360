@@ -2,9 +2,9 @@ import argparse
 import os
 import sys
 
-from USYDecho360.EchoExceptions import EchoLoginError
-from USYDecho360.EchoDownloader import EchoDownloader
-from USYDecho360.EchoCourse import EchoCourse
+from USYDecho360.exceptions import EchoLoginError
+from USYDecho360.downloader import EchoDownloader
+from USYDecho360.course import EchoCourse
 from datetime import datetime
 
 

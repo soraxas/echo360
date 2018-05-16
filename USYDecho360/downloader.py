@@ -3,7 +3,7 @@ import os
 import sys
 
 from USYDecho360.hls_downloader import Downloader
-from USYDecho360.EchoExceptions import EchoLoginError
+from USYDecho360.exceptions import EchoLoginError
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
