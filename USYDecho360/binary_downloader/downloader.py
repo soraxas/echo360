@@ -7,7 +7,7 @@ import wget
 import shutil
 
 
-class BinaryDownloader:
+class BinaryDownloader(object):
 
     def __init__(self):
         raise NotImplementedError
