@@ -3,9 +3,12 @@ import os
 import sys
 
 from USYDecho360.hls_downloader import Downloader
+from USYDecho360.EchoExceptions import EchoLoginError
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+import warnings  # hide the warnings of phantomjs being deprecated
+warnings.filterwarnings("ignore", category=UserWarning, module='selenium')
 
 
 class EchoDownloader(object):
@@ -35,9 +38,11 @@ class EchoDownloader(object):
         )
         if use_local_binary:
             if use_chrome:
-                from USYDecho360.binary_downloader.chromedriver import get_bin
+                from USYDecho360.binary_downloader.chromedriver import ChromedriverDownloader
+                get_bin = ChromedriverDownloader().get_bin
             else:
-                from USYDecho360.binary_downloader.phantomjs import get_bin
+                from USYDecho360.binary_downloader.phantomjs import PhantomjsDownloader
+                get_bin = PhantomjsDownloader().get_bin
             kwargs = {'executable_path' : get_bin(),
                       'desired_capabilities':dcap,
                       'service_log_path':log_path}
@@ -70,11 +75,11 @@ class EchoDownloader(object):
             if '<html><head></head><body></body></html>' in self._driver.page_source:
                 print('Failed!')
                 print('  > Failed to connect to server, is your internet working...?')
-                exit(1)
+                raise EchoLoginError(self._driver)
             elif 'check your URL' in self._driver.page_source:
                 print('Failed!')
                 print('  > Failed to connet to course page, is the uuid correct...?')
-                exit(1)
+                raise EchoLoginError(self._driver)
             else:
                 # Should be only for the case where login details is not required left
                 print('INFO: No need to login :)')
@@ -109,8 +114,7 @@ class EchoDownloader(object):
         if self._driver.find_elements_by_id('j_username'):
             print('Failed!')
             print('  > Failed to login, is your username/password correct...?')
-            exit(1)
-
+            raise EchoLoginError(self._driver)
         # hot patch for cavas (canvas.sydney.edu.au) where uuid is hidden in page source
         # we detect it by trying to retrieve the real uuid
         import re

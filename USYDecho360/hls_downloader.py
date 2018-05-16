@@ -7,6 +7,7 @@ import requests
 import os, sys
 import time
 
+from USYDecho360.EchoExceptions import HlsDownloaderError
 
 def urljoin(a, b):
     # get url relative root path
@@ -134,7 +135,7 @@ class Downloader:
                     return
             except FileNotFoundError as e:
                 print('\r\nError in writing file: {}'.format(e))
-                exit(1)
+                raise HlsDownloaderError
             except:
                 retry -= 1
         sys.stdout.write('[FAIL]')

@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 
+from USYDecho360.EchoExceptions import EchoLoginError
 from USYDecho360.EchoDownloader import EchoDownloader
 from USYDecho360.EchoCourse import EchoCourse
 from datetime import datetime
@@ -90,11 +91,12 @@ def main():
     use_local_binary = True
 
     if use_chrome:
-        import USYDecho360.binary_downloader.chromedriver as binary_downloader
+        from USYDecho360.binary_downloader.chromedriver import ChromedriverDownloader as binary_downloader
         binary_type = 'chromedriver'
     else:
-        import USYDecho360.binary_downloader.phantomjs as binary_downloader
+        from USYDecho360.binary_downloader.phantomjs import PhantomjsDownloader as binary_downloader
         binary_type = 'phantomjs'
+    binary_downloader = binary_downloader()  # initialise class
     # First test for existance of localbinary file
     if not os.path.isfile(binary_downloader.get_bin()):
         # If failed, then test for existance of global executable in PATH
@@ -135,4 +137,8 @@ def start_download_binary(binary_downloader, binary_type, manual=False):
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except EchoLoginError:
+        # raise KeyboardInterrupt
+        pass
