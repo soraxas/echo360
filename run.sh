@@ -21,4 +21,4 @@ fi
 
 source $VENV/bin/activate
 
-$PYTHON usydEcho360.py $@
+$PYTHON usydEcho360.py "$@"
