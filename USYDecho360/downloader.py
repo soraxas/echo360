@@ -7,6 +7,7 @@ from USYDecho360.exceptions import EchoLoginError
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+import selenium.common.exceptions as seleniumException
 import warnings  # hide the warnings of phantomjs being deprecated
 warnings.filterwarnings("ignore", category=UserWarning, module='selenium')
 
@@ -68,7 +69,7 @@ class EchoDownloader(object):
         self._driver.get(self._course.url)
         # First see if we have successfully access course page without the need to login
         # for example: https://view.streaming.sydney.edu.au:8443/ess/portal/section/ed9b26eb-a785-4f4e-bd51-69f3faab388a
-        if self._driver.find_elements_by_id('j_username'):
+        if self.find_element_by_partial_id('username') is not None:
             self.loginWithCredentials()
         else:
             # check if it is network error
@@ -90,7 +91,7 @@ class EchoDownloader(object):
         if self._username is None or self._password is None:
             print('Credentials needed...')
             if self._username is None:
-                if sys.version_info < (3,0): # special handling for python2
+                if sys.version_info < (3, 0):  # special handling for python2
                     input = raw_input
                 else:
                     from builtins import input
@@ -99,19 +100,26 @@ class EchoDownloader(object):
                 import getpass
                 self._password = getpass.getpass('Passowrd for {0}: '.format(self._username))
         # Input username and password:
-        user_name = self._driver.find_element_by_id('j_username')
+        # user_name = self._driver.find_element_by_id('j_username')
+        user_name = self.find_element_by_partial_id('username')
         user_name.clear()
         user_name.send_keys(self._username)
 
-        user_passwd = self._driver.find_element_by_id('j_password')
+        # user_passwd = self._driver.find_element_by_id('j_password')
+        user_passwd = self.find_element_by_partial_id('password')
         user_passwd.clear()
         user_passwd.send_keys(self._password)
 
-        login_btn = self._driver.find_element_by_id('login-btn')
-        login_btn.submit()
+        try:
+            login_btn = self._driver.find_element_by_id('login-btn')
+            login_btn.submit()
+        except seleniumException.NoSuchElementException:
+            # try submit via enter key
+            from selenium.webdriver.common.keys import Keys
+            user_passwd.send_keys(Keys.RETURN)
 
         # test if the login is success
-        if self._driver.find_elements_by_id('j_username'):
+        if self.find_element_by_partial_id('username') is not None:
             print('Failed!')
             print('  > Failed to login, is your username/password correct...?')
             raise EchoLoginError(self._driver)
@@ -198,3 +206,9 @@ class EchoDownloader(object):
             msg += '        {}\n'.format(i)
         msg += '{0}\n'.format(bar)
         return msg
+
+    def find_element_by_partial_id(self, id):
+        try:
+            return self._driver.find_element_by_xpath("//*[contains(@id,'{0}')]".format(id))
+        except seleniumException.NoSuchElementException:
+            return None

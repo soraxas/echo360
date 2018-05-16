@@ -6,14 +6,16 @@ from USYDecho360.videos import EchoVideos
 
 class EchoCourse(object):
 
-    def __init__(self, uuid):
+    def __init__(self, uuid, hostname=None):
         self._course_id = ""
         self._course_name = ""
         self._uuid = uuid
         self._videos = None
         self._driver = None
-
-        self._hostname = "https://view.streaming.sydney.edu.au:8443"
+        if hostname is None:
+            self._hostname = "https://view.streaming.sydney.edu.au:8443"
+        else:
+            self._hostname = hostname
 
     def get_videos(self):
         if self._driver is None:
