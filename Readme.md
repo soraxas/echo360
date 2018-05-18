@@ -1,8 +1,8 @@
 # Echo360 Videos Downloader #
 
-USYDecho360 is a command-line Python tool that allows you to download lecture videos from any university's Echo360 lecture portal. All that's required is the particular course's url. See the FAQ for tips on how to find it.
+echo360 is a command-line Python tool that allows you to download lecture videos from any university's Echo360 lecture portal. All that's required is the particular course's url. See the FAQ for tips on how to find it.
 
-**NOTE THAT** although this is named as echo360, it _should_ work in all university's echo360 system in theory, see FAQ for details.
+The way this script works _should_ support all university's echo360 system in theory, see FAQ for details.
 
 
 # Getting Started #
@@ -142,7 +142,7 @@ Note: sometime it works better than phantomjs in some system
 # FAQ #
 
 ### Is my university supported? ###
-This is primarily built for the echo system in the University of Sydney. But in theory, as long as the url are in the format of:
+This is first built for the echo system in the University of Sydney, and then validated in several other universities' echo system. In theory, as long as the url are in the format of:
 ```shell
 https://$(hostname)/ess/portal/section/$(UUID)
 ```
@@ -164,11 +164,17 @@ The URL for the University of Sydney - 2017 semester 2 of CIVL4903 looks like
 https://view.streaming.sydney.edu.au:8443/ess/portal/section/041698d6-f43a-4b09-a39a-b90475a63530
 ```
 
-which you can verify is correct in the above screenshot. The UUID (Unified Unique IDentifier) is the last element of the URL. So in the above example it's,
+which you can verify is correct in the above screenshot. **This should be the full URL you enter into the script, for all other universities' echo system.**
 
+The UUID (Unified Unique IDentifier) is the last element of the URL. So in the above example it's,
 ```
 041698d6-f43a-4b09-a39a-b90475a63530
 ```
 
+### Technical details ###
+
+The current script uses a web-driver to emulate as a web-browser in order to retrieve the original streaming link. There are current two options for the web-driver: PhantomJS and Chrome. It then uses a hls downloader to simultaneously download all the smaller parts of the videos, and combined into one. Transcoding into mp4 will be performed if ffmpeg is present in your system, and all files will be renamed into a nice format.
+
 # Credits #
-Credits to [jhalstead85](https://github.com/jhalstead85/lecho360) for which this script is based upon, but this has been adopted to be usable for USYD echo360.
+Credits to [jhalstead85](https://github.com/jhalstead85/lecho360) for which this script is based upon.
+This script has then been adopted to be usable for USYD echo360. It was then extended to work in canvas (which uses a human-readable name instead of UUID); and later automated the entire process and become usable for all other universities.

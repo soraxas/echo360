@@ -1,7 +1,7 @@
 import json
 import sys
 
-from USYDecho360.videos import EchoVideos
+from echo360.videos import EchoVideos
 
 
 class EchoCourse(object):

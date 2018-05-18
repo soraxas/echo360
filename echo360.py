@@ -3,9 +3,9 @@ import os
 import sys
 import re
 
-from USYDecho360.exceptions import EchoLoginError
-from USYDecho360.downloader import EchoDownloader
-from USYDecho360.course import EchoCourse
+from echo360.exceptions import EchoLoginError
+from echo360.downloader import EchoDownloader
+from echo360.course import EchoCourse
 from datetime import datetime
 
 
@@ -84,6 +84,9 @@ def handle_args():
     course_hostname = re.search('https?:[/]{2}[^/]*', course_url)  # would be none if it does not exists
     if course_hostname is not None:
         course_hostname = course_hostname.group()
+    else:
+        print("INFO: Non-URL value is given, defaults to University of Sydney's echo system")
+        print("INFO: Provide the full URL if you want to download from another University")
     course_uuid = re.search('[^/]+(?=/$|$)', course_url)  # retrieve the last part of the URL
     course_uuid = course_uuid.group()
 
@@ -98,10 +101,10 @@ def main():
     use_local_binary = True
 
     if use_chrome:
-        from USYDecho360.binary_downloader.chromedriver import ChromedriverDownloader as binary_downloader
+        from echo360.binary_downloader.chromedriver import ChromedriverDownloader as binary_downloader
         binary_type = 'chromedriver'
     else:
-        from USYDecho360.binary_downloader.phantomjs import PhantomjsDownloader as binary_downloader
+        from echo360.binary_downloader.phantomjs import PhantomjsDownloader as binary_downloader
         binary_type = 'phantomjs'
     binary_downloader = binary_downloader()  # initialise class
     # First test for existance of localbinary file

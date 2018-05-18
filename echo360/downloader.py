@@ -2,8 +2,8 @@ import dateutil.parser
 import os
 import sys
 
-from USYDecho360.hls_downloader import Downloader
-from USYDecho360.exceptions import EchoLoginError
+from echo360.hls_downloader import Downloader
+from echo360.exceptions import EchoLoginError
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -39,10 +39,10 @@ class EchoDownloader(object):
         )
         if use_local_binary:
             if use_chrome:
-                from USYDecho360.binary_downloader.chromedriver import ChromedriverDownloader
+                from echo360.binary_downloader.chromedriver import ChromedriverDownloader
                 get_bin = ChromedriverDownloader().get_bin
             else:
-                from USYDecho360.binary_downloader.phantomjs import PhantomjsDownloader
+                from echo360.binary_downloader.phantomjs import PhantomjsDownloader
                 get_bin = PhantomjsDownloader().get_bin
             kwargs = {'executable_path' : get_bin(),
                       'desired_capabilities':dcap,

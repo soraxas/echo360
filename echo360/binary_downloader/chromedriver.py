@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from USYDecho360.binary_downloader.downloader import BinaryDownloader
+from echo360.binary_downloader.downloader import BinaryDownloader
 
 
 class ChromedriverDownloader(BinaryDownloader):
