@@ -18,4 +18,4 @@ if not exist %VENV_NAME% (
 	%PYTHON% -m pip install -r requirements.txt
 )
 
-%VENV_NAME%\Scripts\activate && python usydEcho360.py %*
+%VENV_NAME%\Scripts\activate && python echo360.py %*

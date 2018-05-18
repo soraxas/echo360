@@ -60,7 +60,7 @@ def handle_args():
                         action='store_true',
                         default=False,
                         dest="download_binary",
-                        help="Force the usydEcho360.py script to download a local \
+                        help="Force the echo360.py script to download a local \
                               binary file for phantomjs (will override system bin)")
     parser.add_argument("--chrome",
                         action='store_true',

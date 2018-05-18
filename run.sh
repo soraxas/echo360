@@ -39,4 +39,4 @@ fi
 
 source $VENV_NAME/bin/activate
 
-$PYTHON usydEcho360.py "$@"
+$PYTHON echo360.py "$@"
