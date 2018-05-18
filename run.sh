@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PYTHON=python2
+PYTHON=python
 VENV_NAME=_echo360venv
 
 cd "`dirname \"$0\"`"  # go to the script directory
