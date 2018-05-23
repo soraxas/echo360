@@ -7,7 +7,7 @@ The way this script works _should_ support all university's echo360 system in th
 See it in action:
 
 <p align="center">
-    <img width="600" height="auto" src="doc/images/demo.gif" alt="echo360 demo" />
+    <img width="700" height="auto" src="doc/images/demo.gif" alt="echo360 demo" />
 </p>
 
 # Getting Started
@@ -193,6 +193,13 @@ which you can verify is correct in the above screenshot. **This should be the fu
 The UUID (Unified Unique IDentifier) is the last element of the URL. So in the above example it's,
 
     041698d6-f43a-4b09-a39a-b90475a63530
+
+### I'm not sure of how to run it?
+
+First, you'd need to install [Python](https://www.python.org/downloads/) in your system. Then, you can follow the youtube tutorial videos to get an idea of how to use the module.
+
+- For [Windows users](https://www.youtube.com/watch?v=Lv1wtjnCcwI) (and showcased how to retrieve actual echo360 course url)
+[![](https://img.youtube.com/vi/Lv1wtjnCcwI/0.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
 
 ### Technical details
 
