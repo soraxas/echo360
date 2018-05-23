@@ -5,6 +5,9 @@ import os
 import stat
 import wget
 import shutil
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BinaryDownloader(object):

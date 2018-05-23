@@ -1,7 +1,11 @@
 import json
 import sys
+import selenium
+import logging
 
 from echo360.videos import EchoVideos
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class EchoCourse(object):
@@ -27,6 +31,8 @@ class EchoCourse(object):
                 self._videos = EchoVideos(videos_json, self._driver)
             except KeyError as e:
                 self._blow_up("Unable to parse course videos from JSON (course_data)", e)
+            except selenium.common.exceptions.NoSuchElementException as e:
+                self._blow_up("selenium cannot find given elements", e)
 
         return self._videos
 
@@ -78,6 +84,9 @@ class EchoCourse(object):
     def _get_course_data(self):
             try:
                 self.driver.get(self.video_url)
+                _LOGGER.debug("Dumping course page at %s: %s",
+                              self.video_url,
+                              self._driver.page_source)
                 # self.driver.get_screenshot_as_file('./2.png')
                 # print(dir(self.driver))
                 # print('ha')
