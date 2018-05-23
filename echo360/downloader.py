@@ -1,6 +1,7 @@
 import dateutil.parser
 import os
 import sys
+import logging
 
 from echo360.hls_downloader import Downloader
 from echo360.exceptions import EchoLoginError
@@ -10,6 +11,8 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import selenium.common.exceptions as seleniumException
 import warnings  # hide the warnings of phantomjs being deprecated
 warnings.filterwarnings("ignore", category=UserWarning, module='selenium')
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class EchoDownloader(object):
@@ -26,8 +29,6 @@ class EchoDownloader(object):
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
         log_path = os.path.join(root_path, 'webdriver_service.log')
-
-        # self._useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36"
 
         self._useragent = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         # self._driver = webdriver.PhantomJS()
@@ -76,17 +77,24 @@ class EchoDownloader(object):
             if '<html><head></head><body></body></html>' in self._driver.page_source:
                 print('Failed!')
                 print('  > Failed to connect to server, is your internet working...?')
+                _LOGGER.debug("Network seems to be down")
                 raise EchoLoginError(self._driver)
             elif 'check your URL' in self._driver.page_source:
                 print('Failed!')
                 print('  > Failed to connet to course page, is the uuid correct...?')
+                _LOGGER.debug("Failed to find a valid course page")
                 raise EchoLoginError(self._driver)
             else:
                 # Should be only for the case where login details is not required left
                 print('INFO: No need to login :)')
+                _LOGGER.debug("No username found (no need to login?)")
+                _LOGGER.debug("Dumping login page at %s: %s",
+                              self._course.url,
+                              self._driver.page_source)
         print('Done!')
 
     def loginWithCredentials(self):
+        _LOGGER.debug("Logging in with credentials")
         # retrieve username / password if not given before
         if self._username is None or self._password is None:
             print('Credentials needed...')
@@ -193,7 +201,7 @@ class EchoDownloader(object):
 
     def _find_pos(self, videos, the_video):
         for i, video in enumerate(videos):
-            if video == the_video: # compare by object id, because date could possibly be the same in some case.
+            if video == the_video:  # compare by object id, because date could possibly be the same in some case.
                 return i
 
     def success_msg(self, course_name, videos):
