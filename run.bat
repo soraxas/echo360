@@ -1,7 +1,6 @@
 @echo off
 set PYTHON=python
 set VENV_NAME=_echo360venv
-set VENV=venv
 
 cd "%~dp0"
 :: Check virtual env is installed
@@ -12,7 +11,11 @@ if %ERRORLEVEL%==0 (
 ) ELSE (
     :: using python 2
     set VENV=virtualenv
-    %PYTHON% -m pip install --user %VENV%
+    %PYTHON% -c "import %VENV%"
+    if NOT %ERRORLEVEL%==0 (
+        echo Installing virtual environment module...
+        %PYTHON% -m pip install --user %VENV%
+    )
 )
 
 if not exist %VENV_NAME% (
@@ -24,8 +27,6 @@ if not exist %VENV_NAME% (
         echo Try to install pip with admin prelivage?
         pause && EXIT /B 1
     )
-    echo Installing virtual environment module...
-    %PYTHON% -m pip install %VENV%
     if NOT %ERRORLEVEL%==0 ( echo Failed to install virtual environment && pause && EXIT /B 1 )
     echo Creating python virtual environment in "%VENV_NAME%"...
     %PYTHON% -m %VENV% %VENV_NAME%
