@@ -199,7 +199,7 @@ The UUID (Unified Unique IDentifier) is the last element of the URL. So in the a
 First, you'd need to install [Python](https://www.python.org/downloads/) in your system. Then, you can follow the youtube tutorial videos to get an idea of how to use the module.
 
 - For [Windows users](https://www.youtube.com/watch?v=Lv1wtjnCcwI) (and showcased how to retrieve actual echo360 course url)
-[![](https://img.youtube.com/vi/Lv1wtjnCcwI/0.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
+[![](/doc/images/youtube_win_tutorial.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
 
 ### Technical details
 
