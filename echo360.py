@@ -3,11 +3,20 @@ import os
 import sys
 import re
 import logging
+from datetime import datetime
 
 from echo360.exceptions import EchoLoginError
 from echo360.downloader import EchoDownloader
 from echo360.course import EchoCourse
-from datetime import datetime
+try:
+    import pick
+except ImportError as e:
+    # check if this is windows, if so install windows curse on the fly
+    if 'win32' not in sys.platform:
+        raise e
+    import subprocess
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
+
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
