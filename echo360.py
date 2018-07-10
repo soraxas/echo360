@@ -4,10 +4,6 @@ import sys
 import re
 import logging
 from datetime import datetime
-
-from echo360.exceptions import EchoLoginError
-from echo360.downloader import EchoDownloader
-from echo360.course import EchoCourse
 try:
     import pick
 except ImportError as e:
@@ -16,7 +12,9 @@ except ImportError as e:
         raise e
     import subprocess
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
-
+from echo360.exceptions import EchoLoginError
+from echo360.downloader import EchoDownloader
+from echo360.course import EchoCourse
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
