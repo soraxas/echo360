@@ -63,18 +63,6 @@ python echo360.py
     https://view.streaming.sydney.edu.au:8443/ess/portal/section/2018_S1C_INFO1001_ND
 ```
 
-### Download individual video(s)
-
-You are in luck! It is now possible to pick a subset of videos to download from (instead of needing to download everything like before). Just pass the interactive argument like this:
-```sh
-./run.sh ECHO360_URL --interactive  # or ./run.sh ECHO360_URL -i
-```
-...and it shall presents an interactive screen for you to pick each individual video(s) that you want to download, like the screenshot as shown below.
-
-<p align="center">
-    <img src="/doc/images/pick_individual_videos_screenshot.png" width="650" height="auto" >
-</p>
-
 ### Script args
 ```
 >>> usage: echo360.py [-h] [--output OUTPUT_PATH]
@@ -214,6 +202,16 @@ First, you'd need to install [Python](https://www.python.org/downloads/) in your
 
 - For [Windows users](https://www.youtube.com/watch?v=Lv1wtjnCcwI) (and showcased how to retrieve actual echo360 course url)
 [![](/doc/images/youtube_win_tutorial.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
+
+### How do I download only individual video(s)?
+
+You are in luck! It is now possible to pick a subset of videos to download from (instead of needing to download everything like before). Just pass the interactive argument like this:
+```sh
+./run.sh ECHO360_URL --interactive  # or ./run.sh ECHO360_URL -i
+```
+...and it shall presents an interactive screen for you to pick each individual video(s) that you want to download, like the screenshot as shown below.
+
+<img src="/doc/images/pick_individual_videos_screenshot.png" width="650" height="auto" >
 
 ### Technical details
 
