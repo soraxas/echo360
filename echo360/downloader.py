@@ -6,6 +6,7 @@ import logging
 from echo360.hls_downloader import Downloader
 from echo360.exceptions import EchoLoginError
 
+from pick import pick
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import selenium.common.exceptions as seleniumException
@@ -23,7 +24,8 @@ class EchoDownloader(object):
                  username,
                  password,
                  use_local_binary=False,
-                 use_chrome=False):
+                 use_chrome=False,
+                 interactive_mode=False):
         self._course = course
         root_path = os.path.dirname(
             os.path.abspath(sys.modules['__main__'].__file__))
@@ -33,6 +35,7 @@ class EchoDownloader(object):
         self._date_range = date_range
         self._username = username
         self._password = password
+        self.interactive_mode = interactive_mode
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
         log_path = os.path.join(root_path, 'webdriver_service.log')
@@ -172,19 +175,28 @@ class EchoDownloader(object):
         filtered_videos = [
             video for video in videos if self._in_date_range(video.date)
         ]
-        print('=' * 60)
-        print('    Course: {0} - {1}'.format(self._course.course_id,
-                                             self._course.course_name))
-        print('      Total videos to download: {0} out of {1}'.format(
-            len(filtered_videos), len(videos)))
-        print('=' * 60)
-
-        downloaded_videos = []
-        for video in reversed(list(filtered_videos)):
+        videos_to_be_download = []
+        for video in reversed(filtered_videos):  # reverse so we download newest first
             lecture_number = self._find_pos(videos, video)
             title = "Lecture {}".format(lecture_number + 1)
             filename = self._get_filename(self._course.course_id, video.date,
                                           title)
+            videos_to_be_download.append((filename, video))
+        if self.interactive_mode:
+            title = "Select video(s) to be downloaded (SPACE to mark, ENTER to continue):"
+            selected = pick([v[0] for v in videos_to_be_download], title,
+                            multi_select=True, min_selection_count=1)
+            videos_to_be_download = [videos_to_be_download[s[1]] for s in selected]
+
+        print('=' * 60)
+        print('    Course: {0} - {1}'.format(self._course.course_id,
+                                             self._course.course_name))
+        print('      Total videos to download: {0} out of {1}'.format(
+            len(videos_to_be_download), len(videos)))
+        print('=' * 60)
+
+        downloaded_videos = []
+        for filename, video in videos_to_be_download:
             self._download_as(video.url, filename)
             downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
