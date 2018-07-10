@@ -63,51 +63,65 @@ python echo360.py
     https://view.streaming.sydney.edu.au:8443/ess/portal/section/2018_S1C_INFO1001_ND
 ```
 
+### Download individual video(s)
+
+You are in luck! It is now possible to pick a subset of videos to download from (instead of needing to download everything like before). Just pass the interactive argument like this:
+```sh
+./run.sh ECHO360_URL --interactive  # or ./run.sh ECHO360_URL -i
+```
+...and it shall presents an interactive screen for you to pick each individual video(s) that you want to download, like the screenshot as shown below.
+
+<p align="center">
+    <img src="/doc/images/pick_individual_videos_screenshot.png" width="650" height="auto" >
+</p>
+
 ### Script args
+```
+>>> usage: echo360.py [-h] [--output OUTPUT_PATH]
+              [--after-date AFTER_DATEYYYY-MM-DD)]
+              [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
+              [--password PASSWORD] [--download-phantomjs-binary]
+              [--chrome] [--interactive] [--debug]
+              ECHO360_URL
 
-    >>> usage: echo360.py [-h] [--output OUTPUT_PATH]
-                      [--after-date AFTER_DATEYYYY-MM-DD)]
-                      [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
-                      [--password PASSWORD] [--download-phantomjs-binary]
-                      [--chrome] [--debug]
-                      ECHO360_URL
+Download lectures from Echo360 portal.
 
-    Download lectures from Echo360 portal.
+positional arguments:
+  ECHO360_URL           Full URL of the echo360 course page, or only the UUID
+                        (which defaults to USYD). The URL of the course's
+                        video lecture page, for example: http://recordings.eng
+                        ineering.illinois.edu/ess/portal/section/115f3def-7371
+                        -4e98-b72f-6efe53771b2a)
 
-    positional arguments:
-      ECHO360_URL           Full URL of the echo360 course page, or only the UUID
-                            (which defaults to USYD). The URL of the course's
-                            video lecture page, for example: http://recordings.eng
-                            ineering.illinois.edu/ess/portal/section/115f3def-7371
-                            -4e98-b72f-6efe53771b2a)
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --output OUTPUT_PATH, -o OUTPUT_PATH
-                            Path to the desired output directory. The output
-                            directory must exist. Otherwise the current directory
-                            is used.
-      --after-date AFTER_DATE(YYYY-MM-DD), -a AFTER_DATE(YYYY-MM-DD)
-                            Only download lectures newer than AFTER_DATE
-                            (inclusive). Note: this may be combined with --before-
-                            date.
-      --before-date BEFORE_DATE(YYYY-MM-DD), -b BEFORE_DATE(YYYY-MM-DD)
-                            Only download lectures older than BEFORE_DATE
-                            (inclusive). Note: this may be combined with --after-
-                            date
-      --unikey UNIKEY, -u UNIKEY
-                            Your unikey for your University of Sydney elearning
-                            account
-      --password PASSWORD, -p PASSWORD
-                            Your password for your University of Sydney elearning
-                            account
-      --download-phantomjs-binary
-                            Force the echo360.py script to download a local binary
-                            file for phantomjs (will override system bin)
-      --chrome              Use Chrome Driver instead of phantomjs webdriver. You
-                            must have chromedriver installed in your PATH.
-      --debug               Enable extensive logging.
-
+optional arguments:
+  -h, --help            show this help message and exit
+  --output OUTPUT_PATH, -o OUTPUT_PATH
+                        Path to the desired output directory. The output
+                        directory must exist. Otherwise the current directory
+                        is used.
+  --after-date AFTER_DATE(YYYY-MM-DD), -a AFTER_DATE(YYYY-MM-DD)
+                        Only download lectures newer than AFTER_DATE
+                        (inclusive). Note: this may be combined with --before-
+                        date.
+  --before-date BEFORE_DATE(YYYY-MM-DD), -b BEFORE_DATE(YYYY-MM-DD)
+                        Only download lectures older than BEFORE_DATE
+                        (inclusive). Note: this may be combined with --after-
+                        date
+  --unikey UNIKEY, -u UNIKEY
+                        Your unikey for your University of Sydney elearning
+                        account
+  --password PASSWORD, -p PASSWORD
+                        Your password for your University of Sydney elearning
+                        account
+  --download-phantomjs-binary
+                        Force the echo360.py script to download a local binary
+                        file for phantomjs (will override system bin)
+  --chrome              Use Chrome Driver instead of phantomjs webdriver. You
+                        must have chromedriver installed in your PATH.
+  --interactive, -i     Interactively pick the lectures you want, instead of
+                        download all (default) or based on dates .
+  --debug               Enable extensive logging.
+```
 # Examples
 
 ```shell

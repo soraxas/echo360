@@ -95,6 +95,13 @@ def handle_args():
         help="Use Chrome Driver instead of phantomjs webdriver. You \
                               must have chromedriver installed in your PATH.")
     parser.add_argument(
+        "--interactive",
+        '-i',
+        action='store_true',
+        default=False,
+        help="Interactively pick the lectures you want, instead of download all \
+                              (default) or based on dates .")
+    parser.add_argument(
         "--debug",
         action='store_true',
         default=False,
@@ -142,12 +149,12 @@ def handle_args():
 
     return (course_uuid, course_hostname, output_path, after_date, before_date,
             username, password, args['download_binary'], args['use_chrome'],
-            args['enable_degbug'])
+            args['interactive'], args['enable_degbug'])
 
 
 def main():
     (course_uuid, course_hostname, output_path, after_date, before_date,
-     username, password, download_binary, use_chrome,
+     username, password, download_binary, use_chrome, interactive_mode,
      enable_degbug) = handle_args()
 
     setup_logging(enable_degbug)
@@ -195,7 +202,8 @@ def main():
         username=username,
         password=password,
         use_local_binary=use_local_binary,
-        use_chrome=use_chrome)
+        use_chrome=use_chrome,
+        interactive_mode=interactive_mode)
     print('>>> Download will use "{}" webdriver from {} executable <<<'.format(
         'ChromeDriver' if use_chrome else 'PhantomJS', 'LOCAL'
         if use_local_binary else 'GLOBAL'))
