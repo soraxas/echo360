@@ -78,6 +78,15 @@ def handle_args():
                               Sydney elearning account",
         metavar="PASSWORD")
     parser.add_argument(
+        "--setup-credentials",
+        action='store_true',
+        default=False,
+        dest="setup_credential",
+        help="Open a chrome instance to expose an ability for user to log into \
+                                any website to obtain credentials needed before proceeding. \
+                                (implies using chrome-driver)"
+    )
+    parser.add_argument(
         "--download-phantomjs-binary",
         action='store_true',
         default=False,
@@ -146,14 +155,14 @@ def handle_args():
     _LOGGER.debug("Hostname: %s, UUID: %s", course_hostname, course_uuid)
 
     return (course_uuid, course_hostname, output_path, after_date, before_date,
-            username, password, args['download_binary'], args['use_chrome'],
-            args['interactive'], args['enable_degbug'])
+            username, password, args['setup_credential'], args['download_binary'],
+            args['use_chrome'], args['interactive'], args['enable_degbug'])
 
 
 def main():
     (course_uuid, course_hostname, output_path, after_date, before_date,
-     username, password, download_binary, use_chrome, interactive_mode,
-     enable_degbug) = handle_args()
+     username, password, setup_credential, download_binary, use_chrome,
+     interactive_mode, enable_degbug) = handle_args()
 
     setup_logging(enable_degbug)
 
@@ -165,6 +174,8 @@ def main():
     # NOTE: local binary will always override system PATH binary
     use_local_binary = True
 
+    if setup_credential: # setup credentials must use chrome driver
+        use_chrome = True
     if use_chrome:
         from echo360.binary_downloader.chromedriver import ChromedriverDownloader as binary_downloader
         binary_type = 'chromedriver'
@@ -199,14 +210,17 @@ def main():
         date_range=(after_date, before_date),
         username=username,
         password=password,
+        setup_credential=setup_credential,
         use_local_binary=use_local_binary,
         use_chrome=use_chrome,
         interactive_mode=interactive_mode)
+
     print('>>> Download will use "{}" webdriver from {} executable <<<'.format(
         'ChromeDriver' if use_chrome else 'PhantomJS', 'LOCAL'
         if use_local_binary else 'GLOBAL'))
+    if setup_credential:
+        run_setup_credential(downloader._driver, course_hostname)
     downloader.download_all()
-
 
 def start_download_binary(binary_downloader, binary_type, manual=False):
     print('=' * 65)
@@ -217,6 +231,18 @@ def start_download_binary(binary_downloader, binary_type, manual=False):
     binary_downloader.download()
     print('Done!')
     print('=' * 65)
+
+def run_setup_credential(chromedriver, url):
+    import threading
+    chromedriver.get(url)
+    try:
+        print("> Type 'continue' and press [enter]")
+        for line in sys.stdin:
+            print("> Type 'continue' and press [enter]")
+            if line and line.startswith('continue'):
+                break
+    except KeyboardInterrupt:
+        pass
 
 
 def setup_logging(enable_degbug=False):

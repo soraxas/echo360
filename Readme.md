@@ -101,6 +101,9 @@ optional arguments:
   --password PASSWORD, -p PASSWORD
                         Your password for your University of Sydney elearning
                         account
+  --setup-credentials   Open a chrome instance to expose an ability for user
+                        to log into any website to obtain credentials needed
+                        before proceeding. (implies using chrome-driver)
   --download-phantomjs-binary
                         Force the echo360.py script to download a local binary
                         file for phantomjs (will override system bin)
@@ -202,6 +205,14 @@ First, you'd need to install [Python](https://www.python.org/downloads/) in your
 
 - For [Windows users](https://www.youtube.com/watch?v=Lv1wtjnCcwI) (and showcased how to retrieve actual echo360 course url)
 [![](/doc/images/youtube_win_tutorial.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
+
+### My credentials does not work?
+
+You can setup any credentials need with manually logging into websites, by running the script with:
+```sh
+./run.sh ECHO360_URL --setup-credential
+```
+This will open up a chrome instance that allows you to log into your website as you normally do. Afterwards, simply type 'continue' into your shell and press enter to continue to proceeds with the rest of the script.
 
 ### How do I download only individual video(s)?
 
