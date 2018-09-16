@@ -2,6 +2,7 @@ import dateutil.parser
 import os
 import sys
 import logging
+import re
 
 from echo360.hls_downloader import Downloader
 from echo360.exceptions import EchoLoginError
@@ -37,6 +38,8 @@ class EchoDownloader(object):
         self._username = username
         self._password = password
         self.interactive_mode = interactive_mode
+
+        self.regex_replace_invalid = re.compile(r'[\\\\/:*?\"<>|]')
 
         # define a log path for phantomjs to output, to prevent hanging due to PIPE being full
         log_path = os.path.join(root_path, 'webdriver_service.log')
@@ -154,7 +157,6 @@ class EchoDownloader(object):
             raise EchoLoginError(self._driver)
         # hot patch for cavas (canvas.sydney.edu.au) where uuid is hidden in page source
         # we detect it by trying to retrieve the real uuid
-        import re
         uuid = re.search(
             '/ess/client/section/([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})',
             self._driver.page_source)
@@ -173,7 +175,9 @@ class EchoDownloader(object):
         # change the output directory to be inside a folder named after the course
         self._output_dir = os.path.join(self._output_dir, '{0} - {1}'.format(
             self._course.course_id, self._course.course_name).strip())
-        #
+        # replace invalid character for folder
+        self.regex_replace_invalid.sub('_', self._output_dir)
+
         filtered_videos = [
             video for video in videos if self._in_date_range(video.date)
         ]
@@ -231,7 +235,9 @@ class EchoDownloader(object):
         self._driver.get(self._course.url)
 
     def _get_filename(self, course, date, title):
-        return "{} - {} - {}".format(course, date, title)
+        filename = "{} - {} - {}".format(course, date, title)
+        # replace invalid character for files
+        return self.regex_replace_invalid.sub('_', filename)
 
     def _in_date_range(self, date_string):
         the_date = dateutil.parser.parse(date_string).date()
