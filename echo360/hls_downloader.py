@@ -133,7 +133,7 @@ class Downloader:
                     self.ts_current += 1
                     update_progress(self.ts_current, self.ts_total, title='  > {}'.format('Progress'))
                     return
-            except FileNotFoundError as e:
+            except EnvironmentError as e:
                 print('\r\nError in writing file: {}'.format(e))
                 raise HlsDownloaderError
             except:
