@@ -184,7 +184,7 @@ class EchoDownloader(object):
         videos_to_be_download = []
         for video in reversed(filtered_videos):  # reverse so we download newest first
             lecture_number = self._find_pos(videos, video)
-            title = "Lecture {}".format(lecture_number + 1)
+            title = "Lecture {} [{}]".format(lecture_number + 1, video.title)
             filename = self._get_filename(self._course.course_id, video.date,
                                           title)
             videos_to_be_download.append((filename, video))

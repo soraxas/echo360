@@ -63,6 +63,8 @@ class EchoVideo(object):
 
             date = dateutil.parser.parse(video_json["startTime"]).date()
             self._date = date.strftime("%Y-%m-%d")
+            self._title = video_json['title']
+
         except KeyError as e:
             self._blow_up("Unable to parse video data from JSON (course_data)",
                           e)
@@ -102,6 +104,10 @@ class EchoVideo(object):
     @property
     def url(self):
         return self._url
+
+    @property
+    def title(self):
+        return self._title
 
     @staticmethod
     def get_date(video_json):
