@@ -173,7 +173,7 @@ class EchoDownloader(object):
         videos = self._course.get_videos().videos
         print('Done!')
         # change the output directory to be inside a folder named after the course
-        self._output_dir = os.path.join(self._output_dir, '{0} - {1}'.format(
+        self._output_dir = os.path.join(self._output_dir, u'{0} - {1}'.format(
             self._course.course_id, self._course.course_name).strip())
         # replace invalid character for folder
         self.regex_replace_invalid.sub('_', self._output_dir)
@@ -194,12 +194,12 @@ class EchoDownloader(object):
                             multi_select=True, min_selection_count=1)
             videos_to_be_download = [videos_to_be_download[s[1]] for s in selected]
 
-        print('=' * 60)
-        print('    Course: {0} - {1}'.format(self._course.course_id,
+        print(u'=' * 60)
+        print(u'    Course: {0} - {1}'.format(self._course.course_id,
                                              self._course.course_name))
-        print('      Total videos to download: {0} out of {1}'.format(
+        print(u'      Total videos to download: {0} out of {1}'.format(
             len(videos_to_be_download), len(videos)))
-        print('=' * 60)
+        print(u'=' * 60)
 
         downloaded_videos = []
         for filename, video in videos_to_be_download:
@@ -249,15 +249,15 @@ class EchoDownloader(object):
                 return i
 
     def success_msg(self, course_name, videos):
-        bar = '=' * 65
-        msg = '\n{0}\n'.format(bar)
-        msg += '    Course: {0} - {1}'.format(self._course.course_id,
+        bar = u'=' * 65
+        msg = u'\n{0}\n'.format(bar)
+        msg += u'    Course: {0} - {1}'.format(self._course.course_id,
                                               self._course.course_name)
-        msg += '\n{0}\n'.format(bar)
-        msg += '    Successfully downloaded:\n'
+        msg += u'\n{0}\n'.format(bar)
+        msg += u'    Successfully downloaded:\n'
         for i in videos:
-            msg += '        {}\n'.format(i)
-        msg += '{0}\n'.format(bar)
+            msg += u'        {}\n'.format(i)
+        msg += u'{0}\n'.format(bar)
         return msg
 
     def find_element_by_partial_id(self, id):
