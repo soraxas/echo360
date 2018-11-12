@@ -40,6 +40,6 @@ if [ ! -d "$VENV_NAME" ]; then
   $PYTHON -m pip install -r requirements.txt || error_clean_exit "Something went wrong while installing pip packages"
 fi
 
-source $VENV_NAME/bin/activate || error_exit "Failed to source virtual environment"
+source $VENV_NAME/bin/activate || error_exit "Failed to source virtual environment (try to delete '$VENV_NAME/' and re-run)"
 
 $PYTHON echo360.py "$@"
