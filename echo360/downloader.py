@@ -114,6 +114,7 @@ class EchoDownloader(object):
                 _LOGGER.debug("No username found (no need to login?)")
                 _LOGGER.debug("Dumping login page at %s: %s", self._course.url,
                               self._driver.page_source)
+        self.retrieve_real_uuid()
         print('Done!')
 
     def loginWithCredentials(self):
@@ -155,14 +156,6 @@ class EchoDownloader(object):
             print('Failed!')
             print('  > Failed to login, is your username/password correct...?')
             raise EchoLoginError(self._driver)
-        # hot patch for cavas (canvas.sydney.edu.au) where uuid is hidden in page source
-        # we detect it by trying to retrieve the real uuid
-        uuid = re.search(
-            '/ess/client/section/([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})',
-            self._driver.page_source)
-        if uuid is not None:
-            uuid = uuid.groups()[0]
-            self._course._uuid = uuid
 
     def download_all(self):
         sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
@@ -266,3 +259,13 @@ class EchoDownloader(object):
                 "//*[contains(@id,'{0}')]".format(id))
         except seleniumException.NoSuchElementException:
             return None
+
+    def retrieve_real_uuid(self):
+        # patch for cavas (canvas.sydney.edu.au) where uuid is hidden in page source
+        # we detect it by trying to retrieve the real uuid
+        uuid = re.search(
+            '/ess/client/section/([0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12})',
+            self._driver.page_source)
+        if uuid is not None:
+            uuid = uuid.groups()[0]
+            self._course._uuid = uuid
