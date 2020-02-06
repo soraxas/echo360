@@ -1,0 +1,5 @@
+title: Echo360 Downloader
+description: Cli tool for automated downloads of echo360 videos
+show_downloads: true
+google_analytics:
+theme: jekyll-theme-leap-day
