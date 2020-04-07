@@ -73,7 +73,7 @@ class EchoCourse(object):
         if self._course_name == "":
             # trigger getting course_id to get course name as well
             self.course_id
-        return self._course_name
+        return self._course_name.encode('utf-8')
 
     @property
     def driver(self):
