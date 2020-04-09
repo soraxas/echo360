@@ -66,14 +66,14 @@ class EchoCourse(object):
             except KeyError as e:
                 self._blow_up("Unable to parse course id (e.g. CS473) from JSON (course_data)", e)
 
-        return self._course_id
+        return self._course_id.decode('utf-8').encode('utf-8')
 
     @property
     def course_name(self):
         if self._course_name == "":
             # trigger getting course_id to get course name as well
             self.course_id
-        return self._course_name.encode('utf-8')
+        return self._course_name.decode('utf-8').encode('utf-8')
 
     @property
     def driver(self):
