@@ -107,7 +107,10 @@ class EchoVideo(object):
 
     @property
     def title(self):
-        return self._title.decode('utf-8').encode('utf-8')
+        if type(self._title) != str:
+            # it's type unicode for python2
+            return self._title.encode('utf-8')
+        return self._title
 
     @staticmethod
     def get_date(video_json):
