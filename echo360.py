@@ -236,10 +236,14 @@ def run_setup_credential(chromedriver, url):
     import threading
     chromedriver.get(url)
     try:
-        print("> Type 'continue' and press [enter]")
-        for line in sys.stdin:
-            print("> Type 'continue' and press [enter]")
-            if line and line.startswith('continue'):
+        # for making it compatiable with Python 2 & 3
+        input = raw_input
+    except NameError:
+        pass
+    try:
+        while True:
+            user_inputs = input("> Type 'continue' and press [enter]\n")
+            if user_inputs.lower() == 'continue':
                 break
     except KeyboardInterrupt:
         pass
