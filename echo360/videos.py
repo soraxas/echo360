@@ -37,7 +37,6 @@ class EchoVideos(object):
         update_course_retrieval_progress(0, total_videos_num)
 
         for i, video_json in enumerate(videos_json):
-            video_date = EchoVideo.get_date(video_json)
             self._videos.append(EchoVideo(video_json, self._driver))
             update_course_retrieval_progress(i + 1, total_videos_num)
 
@@ -69,8 +68,7 @@ class EchoVideo(object):
             m3u8_url = self._loop_find_m3u8_url(video_url, waitsecond=30)
             self._url = m3u8_url
 
-            date = dateutil.parser.parse(video_json["startTime"]).date()
-            self._date = date.strftime("%Y-%m-%d")
+            self._date = self.get_date(video_json["startTime"])
             self._title = video_json['title']
 
         except KeyError as e:
@@ -120,9 +118,16 @@ class EchoVideo(object):
             return self._title.encode('utf-8')
         return self._title
 
-    @staticmethod
-    def get_date(video_json):
-        return dateutil.parser.parse(video_json["startTime"]).date()
+    def get_date(self, video_json):
+        try:
+            # date is not important so we will just ignore it if something went wrong
+            date = dateutil.parser.parse(self._extract_date(video_json)).date()
+            return date.strftime("%Y-%m-%d")
+        except Exception:
+            return "0000-00-00"
+    
+    def _extract_date(self, video_json):
+        return video_json["startTime"]
 
     def _blow_up(self, str, e):
         print(str)
@@ -160,7 +165,6 @@ class EchoCloudVideos(EchoVideos):
         update_course_retrieval_progress(0, total_videos_num)
 
         for i, video_json in enumerate(videos_json):
-            video_date = EchoCloudVideo.get_date(video_json)
             self._videos.append(EchoCloudVideo(video_json, self._driver, hostname))
             update_course_retrieval_progress(i + 1, total_videos_num)
 
@@ -193,8 +197,7 @@ class EchoCloudVideo(EchoVideo):
             m3u8_url = self._loop_find_m3u8_url(self.video_url, waitsecond=30)
             self._url = m3u8_url
 
-            date = self.get_date(video_json)
-            self._date = date.strftime("%Y-%m-%d")
+            self._date = self.get_date(video_json)
             self._title = video_json['lesson']['lesson']['name']
 
         except KeyError as e:
@@ -306,6 +309,5 @@ class EchoCloudVideo(EchoVideo):
                     raise
                 stale_attempt += 1
 
-    @staticmethod
-    def get_date(video_json):
-        return dateutil.parser.parse(video_json["lesson"]["startTimeUTC"]).date()
+    def _extract_date(self, video_json):
+        return video_json["lesson"]["startTimeUTC"]
