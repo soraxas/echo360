@@ -1,6 +1,8 @@
 import json
 import re
 import sys
+
+import requests
 import selenium
 import logging
 
@@ -163,3 +165,25 @@ class EchoCloudCourse(EchoCourse):
     @property
     def nice_name(self):
         return self.course_name
+
+    def _get_course_data(self):
+        try:
+            self.driver.get(self.video_url)
+            _LOGGER.debug("Dumping course page at %s: %s",
+                          self.video_url,
+                          self._driver.page_source)
+            # use requests to retrieve data
+            session = requests.Session()
+            # load cookies
+            for cookie in self._driver.get_cookies():
+                session.cookies.set(cookie["name"], cookie["value"])
+
+            r = session.get(self.video_url)
+            if not r.ok:
+                raise Exception("Error: Failed to get m3u8 info for EchoCourse!")
+
+            json_str = r.content
+        except ValueError as e:
+            raise Exception("Unable to retrieve JSON (course_data) from url", e)
+        self.course_data = json.loads(json_str)
+        return self.course_data
