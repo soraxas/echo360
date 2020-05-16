@@ -42,9 +42,9 @@ def update_progress(current, total, title=None):
 
 
 class Downloader:
-    def __init__(self, pool_size, retry=3):
+    def __init__(self, pool_size, retry=3, selenium_cookies=None):
         self.pool = Pool(pool_size)
-        self.session = self._get_http_session(pool_size, pool_size, retry)
+        self.session = self._get_http_session(pool_size, pool_size, retry, selenium_cookies)
         self.retry = retry
         self.dir = ''
         self.succed = {}
@@ -52,14 +52,18 @@ class Downloader:
         self.ts_total = 0
         self._result_file_name = None
 
-    def _get_http_session(self, pool_connections, pool_maxsize, max_retries):
+    def _get_http_session(self, pool_connections, pool_maxsize, max_retries, selenium_cookies=None):
             session = requests.Session()
             adapter = requests.adapters.HTTPAdapter(pool_connections=pool_connections, pool_maxsize=pool_maxsize, max_retries=max_retries)
             session.mount('http://', adapter)
             session.mount('https://', adapter)
+            if selenium_cookies is not None:
+                # load cookies
+                for cookie in selenium_cookies:
+                    session.cookies.set(cookie["name"], cookie["value"])
             return session
 
-    def run(self, m3u8_url, dir=''):
+    def run(self, m3u8_url, dir='', convert_to_mp4=True):
         self.dir = dir
         if self.dir and not os.path.isdir(self.dir):
             os.makedirs(self.dir)
@@ -67,8 +71,12 @@ class Downloader:
         if r.ok:
             body = r.content
             if body:
-                ts_list = [urljoin(m3u8_url, n.strip()) for n in body.decode().split('\n') if n and not n.startswith("#")]
-                if len(ts_list) == 1:
+                # use set to prevent duplicates
+                ts_list = { urljoin(m3u8_url, n.strip()) for n in body.decode().split('\n') if n and not n.startswith("#") }
+                ts_list = list(ts_list)
+                # this is very hacky as well.. But idk how to overcome some m3u8 has nested
+                # m3u8 and some don't.
+                if len(ts_list) == 1 and ts_list[0].split('.')[-1] not in ("ts", "mp4", "m4s"):
                     file_name = ts_list[0].split('/')[-1].split('?')[0]
                     chunk_list_url = "{0}/{1}".format(m3u8_url[:m3u8_url.rfind('/')], file_name)
                     r = self.session.get(chunk_list_url, timeout=20)
@@ -89,26 +97,28 @@ class Downloader:
         else:
             print("Failed status code: {}".format(r.status_code))
         infile_name = os.path.join(self.dir, self._result_file_name.split('.')[0]+'_all.'+self.result_file_name.split('.')[-1])
-        outfile_name = infile_name.split('.')[0] + '.mp4'
-        sys.stdout.write('  > Converting to mp4... ')
-        sys.stdout.flush()
-        try:
-            ff = ffmpy.FFmpeg(
-                global_options='-loglevel panic',
-                inputs={infile_name: None},
-                outputs={outfile_name: ['-c','copy']}
-            )
-            ff.run()
-            # delete source file after done
-            os.remove(infile_name)
-            self._result_file_name = outfile_name
-            print('Done!')
-        except ffmpy.FFExecutableNotFoundError:
-            print('Skipping! Because "ffmpeg" not installed.')
-            self._result_file_name = infile_name
-        except ffmpy.FFRuntimeError:
-            print('Error! ffmpeg exited with non-zero status code.')
-            self._result_file_name = infile_name
+        self._result_file_name = infile_name
+        if convert_to_mp4:
+            outfile_name = infile_name.split('.')[0] + '.mp4'
+            sys.stdout.write('  > Converting to mp4... ')
+            sys.stdout.flush()
+            try:
+                ff = ffmpy.FFmpeg(
+                    global_options='-loglevel panic',
+                    inputs={infile_name: None},
+                    outputs={outfile_name: ['-c','copy']}
+                )
+                ff.run()
+                # delete source file after done
+                os.remove(infile_name)
+                self._result_file_name = outfile_name
+                print('Done!')
+            except ffmpy.FFExecutableNotFoundError:
+                print('Skipping! Because "ffmpeg" not installed.')
+                self._result_file_name = infile_name
+            except ffmpy.FFRuntimeError:
+                print('Error! ffmpeg exited with non-zero status code.')
+                self._result_file_name = infile_name
 
     def _download(self, ts_list):
         self.pool.map(self._worker, ts_list)

@@ -4,7 +4,7 @@ import sys
 import logging
 import re
 
-from echo360.hls_downloader import Downloader
+from echo360.course import EchoCloudCourse
 from echo360.exceptions import EchoLoginError
 
 from pick import pick
@@ -77,6 +77,7 @@ class EchoDownloader(object):
         else:
             self._driver = webdriver.PhantomJS(**kwargs)
 
+        self.setup_credential = setup_credential
         # Monkey Patch, set the course's driver to the one from downloader
         self._course.set_driver(self._driver)
         self._videos = []
@@ -114,7 +115,9 @@ class EchoDownloader(object):
                 _LOGGER.debug("No username found (no need to login?)")
                 _LOGGER.debug("Dumping login page at %s: %s", self._course.url,
                               self._driver.page_source)
-        self.retrieve_real_uuid()
+        if not isinstance(self._course, EchoCloudCourse):
+            # for canvas echo360
+            self.retrieve_real_uuid()
         print('Done!')
 
     def loginWithCredentials(self):
@@ -158,16 +161,20 @@ class EchoDownloader(object):
             raise EchoLoginError(self._driver)
 
     def download_all(self):
-        sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
-        sys.stdout.flush()
-        self.login()
+        if self.setup_credential:
+            sys.stdout.write(">> I'm gonna assume you are responsible enough to had "
+                             "finished logged in by now ;)\n")
+        else:
+            sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
+            sys.stdout.flush()
+            self.login()
         sys.stdout.write('>> Retrieving echo360 Course Info... ')
         sys.stdout.flush()
         videos = self._course.get_videos().videos
         print('Done!')
         # change the output directory to be inside a folder named after the course
-        self._output_dir = os.path.join(self._output_dir, '{0} - {1}'.format(
-            self._course.course_id, self._course.course_name).strip())
+        self._output_dir = os.path.join(self._output_dir,
+                                        '{0}'.format(self._course.nice_name).strip())
         # replace invalid character for folder
         self.regex_replace_invalid.sub('_', self._output_dir)
 
@@ -188,15 +195,14 @@ class EchoDownloader(object):
             videos_to_be_download = [videos_to_be_download[s[1]] for s in selected]
 
         print('=' * 60)
-        print('    Course: {0} - {1}'.format(self._course.course_id,
-                                             self._course.course_name))
+        print('    Course: {0}'.format(self._course.nice_name))
         print('      Total videos to download: {0} out of {1}'.format(
             len(videos_to_be_download), len(videos)))
         print('=' * 60)
 
         downloaded_videos = []
         for filename, video in videos_to_be_download:
-            self._download_as(video.url, filename)
+            video.download(self._output_dir, filename)
             downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
         self._driver.close()
@@ -208,21 +214,6 @@ class EchoDownloader(object):
     @useragent.setter
     def useragent(self, useragent):
         self._useragent = useragent
-
-    def _download_as(self, video, filename):
-        print('')
-        print('-' * 60)
-        print('Downloading "{}"'.format(filename))
-        echo360_downloader = Downloader(50)
-        echo360_downloader.run(video, self._output_dir)
-
-        # rename file
-        ext = echo360_downloader.result_file_name
-        ext = ext[ext.rfind('.') + 1:]
-        os.rename(
-            os.path.join(echo360_downloader.result_file_name),
-            os.path.join(self._output_dir, '{0}.{1}'.format(filename, ext)))
-        print('-' * 60)
 
     def _initialize(self, echo_course):
         self._driver.get(self._course.url)
@@ -244,8 +235,7 @@ class EchoDownloader(object):
     def success_msg(self, course_name, videos):
         bar = '=' * 65
         msg = '\n{0}\n'.format(bar)
-        msg += '    Course: {0} - {1}'.format(self._course.course_id,
-                                              self._course.course_name)
+        msg += '    Course: {0}'.format(self._course.nice_name)
         msg += '\n{0}\n'.format(bar)
         msg += '    Successfully downloaded:\n'
         for i in videos:

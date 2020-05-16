@@ -14,7 +14,7 @@ except ImportError as e:
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
 from echo360.exceptions import EchoLoginError
 from echo360.downloader import EchoDownloader
-from echo360.course import EchoCourse
+from echo360.course import EchoCourse, EchoCloudCourse
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
@@ -144,27 +144,33 @@ def handle_args():
         )
         _LOGGER.info(
             "Use the full URL if you want to use this in other University")
-    course_uuid = re.search('[^/]+(?=/$|$)',
-                            course_url)  # retrieve the last part of the URL
-    course_uuid = course_uuid.group()
 
     args_without_sensitive_info = dict(args)
     args_without_sensitive_info.pop('unikey', None)
     args_without_sensitive_info.pop('password', None)
     _LOGGER.debug("Input args: %s", args_without_sensitive_info)
-    _LOGGER.debug("Hostname: %s, UUID: %s", course_hostname, course_uuid)
+    _LOGGER.debug("Hostname: %s, UUID: %s", course_hostname, course_url)
 
-    return (course_uuid, course_hostname, output_path, after_date, before_date,
+    return (course_url, course_hostname, output_path, after_date, before_date,
             username, password, args['setup_credential'], args['download_binary'],
             args['use_chrome'], args['interactive'], args['enable_degbug'])
 
 
 def main():
-    (course_uuid, course_hostname, output_path, after_date, before_date,
+    (course_url, course_hostname, output_path, after_date, before_date,
      username, password, setup_credential, download_binary, use_chrome,
      interactive_mode, enable_degbug) = handle_args()
 
     setup_logging(enable_degbug)
+
+    usingEcho360Cloud = False
+    if "echo360.org" in course_hostname:
+        print("> Echo360 Cloud platform detected")
+        print("> This implies setup_credential, and chrome_web_driver")
+        print(">> Please login with your SSO details and type continue when logged in.")
+        print('-' * 65)
+        usingEcho360Cloud = True
+        setup_credential = True
 
     def cmd_exists(x):
         any(
@@ -203,7 +209,15 @@ def main():
         start_download_binary(binary_downloader, binary_type, manual=True)
         exit(0)
 
-    course = EchoCourse(course_uuid, course_hostname)
+    if usingEcho360Cloud:
+        # echo360 cloud
+        course_uuid = re.search('[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+',
+                                course_url).group()  # retrieve the last part of the URL
+        course = EchoCloudCourse(course_uuid, course_hostname)
+    else:
+        course_uuid = re.search('[^/]+(?=/$|$)',
+                                course_url).group()  # retrieve the last part of the URL
+        course = EchoCourse(course_uuid, course_hostname)
     downloader = EchoDownloader(
         course,
         output_path,
@@ -220,6 +234,7 @@ def main():
         if use_local_binary else 'GLOBAL'))
     if setup_credential:
         run_setup_credential(downloader._driver, course_hostname)
+        downloader._driver.set_window_size(0, 0)
     downloader.download_all()
 
 def start_download_binary(binary_downloader, binary_type, manual=False):
