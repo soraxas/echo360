@@ -26,7 +26,7 @@ class EchoDownloader(object):
                  password,
                  setup_credential,
                  use_local_binary=False,
-                 use_chrome=False,
+                 webdriver_to_use='phantomjs',
                  interactive_mode=False):
         self._course = course
         root_path = os.path.dirname(
@@ -47,17 +47,21 @@ class EchoDownloader(object):
         self._useragent = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         # self._driver = webdriver.PhantomJS()
 
-        dcap = dict(DesiredCapabilities.PHANTOMJS)
-        dcap["phantomjs.page.settings.userAgent"] = (
-            "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
-            "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25")
+        dcap = dict()
         if use_local_binary:
-            if use_chrome:
+            if webdriver_to_use == 'chrome':
                 from echo360.binary_downloader.chromedriver import ChromedriverDownloader
                 get_bin = ChromedriverDownloader().get_bin
+            elif webdriver_to_use == 'firefox':
+                from echo360.binary_downloader.firefoxdriver import FirefoxDownloader
+                get_bin = FirefoxDownloader().get_bin
             else:
                 from echo360.binary_downloader.phantomjs import PhantomjsDownloader
                 get_bin = PhantomjsDownloader().get_bin
+                dcap.update(DesiredCapabilities.PHANTOMJS)
+                dcap["phantomjs.page.settings.userAgent"] = (
+                    "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
+                    "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25")
             kwargs = {
                 'executable_path': get_bin(),
                 'desired_capabilities': dcap,
@@ -65,7 +69,7 @@ class EchoDownloader(object):
             }
         else:
             kwargs = {}
-        if use_chrome:
+        if webdriver_to_use == 'chrome':
             from selenium.webdriver.chrome.options import Options
             opts = Options()
             if not setup_credential:
@@ -74,6 +78,15 @@ class EchoDownloader(object):
             opts.add_argument("user-agent={}".format(self._useragent))
             kwargs['chrome_options'] = opts
             self._driver = webdriver.Chrome(**kwargs)
+        elif webdriver_to_use == 'firefox':
+            from selenium.webdriver.firefox.options import Options
+            opts = Options()
+            if not setup_credential:
+                opts.add_argument("--headless")
+            # opts.add_argument("--window-size=1920x1080")
+            opts.add_argument("user-agent={}".format(self._useragent))
+            kwargs['firefox_options'] = opts
+            self._driver = webdriver.Firefox(**kwargs)
         else:
             self._driver = webdriver.PhantomJS(**kwargs)
 

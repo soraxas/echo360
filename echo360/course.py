@@ -102,7 +102,7 @@ class EchoCourse(object):
         except ValueError as e:
             raise Exception("Unable to retrieve JSON (course_data) from url", e)
         self.course_data = json.loads(json_str)
-        return json.loads(json_str)
+        return self.course_data
 
     def set_driver(self, driver):
         self._driver = driver
@@ -129,7 +129,7 @@ class EchoCloudCourse(EchoCourse):
             except KeyError as e:
                 raise Exception("Unable to parse course videos from JSON (course_data)" + e)
             except selenium.common.exceptions.NoSuchElementException as e:
-                raise Exception("selenium cannot find given elements" + e)
+                raise Exception("selenium cannot find given elements" + str(e))
 
         return self._videos
 
