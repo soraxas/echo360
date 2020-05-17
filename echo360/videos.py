@@ -121,10 +121,11 @@ class EchoVideo(object):
     def get_date(self, video_json):
         try:
             # date is not important so we will just ignore it if something went wrong
+            # Also, some echoCloud videos returns None for video start time... :(
             date = dateutil.parser.parse(self._extract_date(video_json)).date()
             return date.strftime("%Y-%m-%d")
         except Exception:
-            return "0000-00-00"
+            return "1970-01-01"
     
     def _extract_date(self, video_json):
         return video_json["startTime"]
@@ -140,6 +141,7 @@ class EchoVideo(object):
         print('Downloading "{}"'.format(filename))
         self._download_url_to_dir(self.url, output_dir, filename, pool_size)
         print('-' * 60)
+        return True
 
     def _download_url_to_dir(self, url, output_dir, filename, pool_size,
                              convert_to_mp4=True):
@@ -184,30 +186,27 @@ class EchoCloudVideo(EchoVideo):
     def __init__(self, video_json, driver, hostname):
         self.hostname = hostname
         self._driver = driver
+        self.video_json = video_json
 
-        try:
-            video_id = "{0}".format(video_json["lesson"]["lesson"]["id"])
-            self.video_id = str(video_id)  # cast back to string
+        video_id = "{0}".format(video_json["lesson"]["lesson"]["id"])
+        self.video_id = str(video_id)  # cast back to string
 
-            self._driver.get(self.video_url)
-            _LOGGER.debug("Dumping video page at %s: %s",
-                          self.video_url,
-                          self._driver.page_source)
+        self._driver.get(self.video_url)
+        _LOGGER.debug("Dumping video page at %s: %s",
+                      self.video_url,
+                      self._driver.page_source)
 
-            m3u8_url = self._loop_find_m3u8_url(self.video_url, waitsecond=30)
-            self._url = m3u8_url
+        m3u8_url = self._loop_find_m3u8_url(self.video_url, waitsecond=30)
+        self._url = m3u8_url
 
-            self._date = self.get_date(video_json)
-            self._title = video_json['lesson']['lesson']['name']
-
-        except KeyError as e:
-            raise KeyError("Unable to parse video data from JSON (course_data)", e)
+        self._date = self.get_date(video_json)
+        self._title = video_json['lesson']['lesson']['name']
 
     def download(self, output_dir, filename, pool_size=50):
         print('')
         print('-' * 60)
         print('Downloading "{}"'.format(filename))
-
+        
         session = requests.Session()
             # load cookies
         for cookie in self._driver.get_cookies():
@@ -216,7 +215,7 @@ class EchoCloudVideo(EchoVideo):
         r = session.get(self.url)
         if not r.ok:
             print("Error: Failed to get m3u8 info. Skipping this video")
-            return
+            return False
 
         lines = [n for n in r.content.decode().split('\n')]
         m3u8_video = None
@@ -235,7 +234,7 @@ class EchoCloudVideo(EchoVideo):
                     m3u8_audio = lines[i]
         if m3u8_video is None or m3u8_audio is None:
             print("ERROR: Failed to find audio/video m3u8... skipping this one")
-            return
+            return False
         # NOW we can finally start downloading!
         from hls_downloader import urljoin
 
@@ -253,6 +252,7 @@ class EchoCloudVideo(EchoVideo):
                                  os.path.join(output_dir, filename + ".mp4"))
         print('Done!')
         print('-' * 60)
+        return True
 
     @staticmethod
     def combine_audio_video(audio_file, video_file, final_file):
@@ -266,48 +266,85 @@ class EchoCloudVideo(EchoVideo):
         ff.run()
 
 
-    def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
-        stale_attempt = 1
-        refresh_attempt = 1
-        while True:
-            self._driver.get(video_url)
-            try:
-                # find all m3u8 files
-                # the replace is for reversing the escape by the escapped js in the page source
-                m3u8urls = set(re.findall(
-                    "https://[^,]*?m3u8",
-                    self._driver.page_source.replace("\/", "/"))
-                )
-                # find one that has audio + video
-                m3u8urls = [url for url in m3u8urls if url.endswith("av.m3u8")]
-                if len(m3u8urls) == 0:
-                    raise Exception(
-                        "No audio+video m3u8 files found! Exiting...\n"
-                        "This script is hard-coded to download audio+video. "
-                        "If this is an intended behaviour, please contact the author.")
-                # There could exists multiple m3u8 files
-                # (e.g. .../s1_av.m3u8, .../s2_av.m3u8, etc.) Probably to refer to
-                # different quality?? We will set it to always prefer higher number.
-                # Since (from my experiment) the prefixes are always the same, we will
-                # just use text sorting to get the higher number.
-                m3u8urls = reversed(m3u8urls)
-                return next(m3u8urls)
+    def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5,
+                            method="from_json"):
+        if method == "brute_force":
+            # this is the first method I tried, which sort of works
+            stale_attempt = 1
+            refresh_attempt = 1
+            while True:
+                self._driver.get(video_url)
+                try:
+                    # find all m3u8 files
+                    # the replace is for reversing the escape by the escapped js in the page source
+                    m3u8urls = set(re.findall(
+                        "https://[^,]*?m3u8",
+                        self._driver.page_source.replace("\/", "/"))
+                    )
+                    break
 
-            except selenium.common.exceptions.TimeoutException:
-                if refresh_attempt >= max_attempts:
-                    print(
-                        '\r\nERROR: Connection timeouted after {} second for {} attempts... \
-                          Possibly internet problem?'.format(
-                            waitsecond, max_attempts))
-                    raise
-                refresh_attempt += 1
-            except StaleElementReferenceException:
-                if stale_attempt >= max_attempts:
-                    print(
-                        '\r\nERROR: Elements are not stable to retrieve after {} attempts... \
-                        Possibly internet problem?'.format(max_attempts))
-                    raise
-                stale_attempt += 1
+                except selenium.common.exceptions.TimeoutException:
+                    if refresh_attempt >= max_attempts:
+                        print(
+                            '\r\nERROR: Connection timeouted after {} second for {} attempts... \
+                              Possibly internet problem?'.format(
+                                waitsecond, max_attempts))
+                        raise
+                    refresh_attempt += 1
+                except StaleElementReferenceException:
+                    if stale_attempt >= max_attempts:
+                        print(
+                            '\r\nERROR: Elements are not stable to retrieve after {} attempts... \
+                            Possibly internet problem?'.format(max_attempts))
+                        raise
+                    stale_attempt += 1
+
+        elif method == "from_json":
+            # seems like json would also contain that information so this method tries
+            # to retrieve based on that
+            if (not self.video_json['lesson']['hasVideo'] or
+                    not self.video_json['lesson']['hasAvailableVideo']):
+                return False
+
+            manifests = self.video_json['lesson']['video']['media']['media']['versions'][0]['manifests']
+            m3u8urls = [m['uri'] for m in manifests]
+            # somehow the hostname for these urls are from amazon (probably offloading
+            # to them.) We need to set the host back to echo360.org
+            try:
+                # python3
+                from urllib.parse import urlparse
+            except ImportError:
+                # python2
+                from urlparse import urlparse
+            new_m3u8urls = []
+            new_hostname = urlparse(self.hostname).netloc
+            for url in m3u8urls:
+                parse_result = urlparse(url)
+                new_m3u8urls.append("{}://content.{}{}".format(
+                    parse_result.scheme, new_hostname, parse_result.path
+                ))
+            m3u8urls = new_m3u8urls
+
+
+        # find one that has audio + video
+        m3u8urls = [url for url in m3u8urls if url.endswith("av.m3u8")]
+        if len(m3u8urls) == 0:
+            print(
+                "No audio+video m3u8 files found! Skipping...\n"
+                "This can either be (i) Credential failure? (ii) Logic error "
+                "in the script. (iii) This lecture only provides audio?\n"
+                "This script is hard-coded to download audio+video. "
+                "If this is your intended behaviour, "
+                "please contact the author.")
+            return False
+        # There could exists multiple m3u8 files
+        # (e.g. .../s1_av.m3u8, .../s2_av.m3u8, etc.) Probably to refer to
+        # different quality?? We will set it to always prefer higher number.
+        # Since (from my experiment) the prefixes are always the same, we will
+        # just use text sorting to get the higher number.
+        m3u8urls = reversed(m3u8urls)
+        return next(m3u8urls)
+
 
     def _extract_date(self, video_json):
         return video_json["lesson"]["startTimeUTC"]

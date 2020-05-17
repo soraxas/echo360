@@ -128,10 +128,12 @@ class EchoCloudCourse(EchoCourse):
                 course_data_json = self._get_course_data()
                 videos_json = course_data_json["data"]
                 self._videos = EchoCloudVideos(videos_json, self._driver, self.hostname)
-            except KeyError as e:
-                raise Exception("Unable to parse course videos from JSON (course_data)" + e)
+            # except KeyError as e:
+            #     print("Unable to parse course videos from JSON (course_data)")
+            #     raise e
             except selenium.common.exceptions.NoSuchElementException as e:
-                raise Exception("selenium cannot find given elements" + str(e))
+                print("selenium cannot find given elements")
+                raise e
 
         return self._videos
 

@@ -79,14 +79,17 @@ class EchoDownloader(object):
             kwargs['chrome_options'] = opts
             self._driver = webdriver.Chrome(**kwargs)
         elif webdriver_to_use == 'firefox':
-            from selenium.webdriver.firefox.options import Options
-            opts = Options()
-            if not setup_credential:
-                opts.add_argument("--headless")
-            # opts.add_argument("--window-size=1920x1080")
-            opts.add_argument("user-agent={}".format(self._useragent))
-            kwargs['firefox_options'] = opts
-            self._driver = webdriver.Firefox(**kwargs)
+            # from selenium.webdriver.firefox.options import Options
+            # opts = Options()
+            # if not setup_credential:
+            #     opts.add_argument("--headless")
+            # # opts.add_argument("--window-size=1920x1080")
+            # opts.add_argument("user-agent={}".format(self._useragent))
+            # kwargs['firefox_options'] = opts
+            profile = webdriver.FirefoxProfile()
+            profile.set_preference("general.useragent.override", self._useragent)
+            # driver = webdriver.Firefox(profile)
+            self._driver = webdriver.Firefox(profile, **kwargs)
         else:
             self._driver = webdriver.PhantomJS(**kwargs)
 
@@ -215,8 +218,12 @@ class EchoDownloader(object):
 
         downloaded_videos = []
         for filename, video in videos_to_be_download:
-            video.download(self._output_dir, filename)
-            downloaded_videos.insert(0, filename)
+            if video.url is False:
+                print(">> Skipping Lecture '{0}' as it says it does "
+                      "not contain any video.".format(filename))
+            else:
+                if video.download(self._output_dir, filename):
+                    downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
         self._driver.close()
 
