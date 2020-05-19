@@ -3,6 +3,7 @@ import os
 import sys
 import re
 import logging
+import time
 from datetime import datetime
 try:
     import pick
@@ -244,11 +245,11 @@ def main():
         webdriver_to_use=webdriver_to_use,
         interactive_mode=interactive_mode)
 
-    print('>>> Download will use "{}" webdriver from {} executable <<<'.format(
+    _LOGGER.debug('>>> Download will use "{}" webdriver from {} executable <<<'.format(
         binary_type, 'LOCAL'
         if use_local_binary else 'GLOBAL'))
     if setup_credential:
-        run_setup_credential(downloader._driver, course_hostname)
+        run_setup_credential(downloader._driver, course_hostname, echo360_cloud=True)
         downloader._driver.set_window_size(0, 0)
     downloader.download_all()
 
@@ -262,9 +263,8 @@ def start_download_binary(binary_downloader, binary_type, manual=False):
     print('Done!')
     print('=' * 65)
 
-def run_setup_credential(chromedriver, url):
-    import threading
-    chromedriver.get(url)
+def run_setup_credential(webdriver, url, echo360_cloud=False):
+    webdriver.get(url)
     try:
         # for making it compatiable with Python 2 & 3
         input = raw_input
@@ -272,9 +272,15 @@ def run_setup_credential(chromedriver, url):
         pass
     try:
         while True:
-            user_inputs = input("> Type 'continue' and press [enter]\n")
-            if user_inputs.lower() == 'continue':
-                break
+            if echo360_cloud:
+                # automatically wait for the Auth Token from webdriver
+                if any('ECHO_JWT' in c['name'] for c in webdriver.get_cookies()):
+                    break
+                time.sleep(2)
+            else:
+                user_inputs = input("> Type 'continue' and press [enter]\n")
+                if user_inputs.lower() == 'continue':
+                    break
     except KeyboardInterrupt:
         pass
 
