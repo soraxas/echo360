@@ -5,3 +5,4 @@ requests>=2.8.14
 gevent>=1.2.2
 wget>=3.2
 pick>=0.6.4
+tqdm

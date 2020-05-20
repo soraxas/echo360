@@ -271,6 +271,10 @@ def run_setup_credential(webdriver, url, echo360_cloud=False):
     except NameError:
         pass
     try:
+        if echo360_cloud:
+            print(" >> After you finished logging into echo360 cloud, the window "
+                  "should be automatically redirected and continued. If it got stuck, "
+                  "please contact the author :)")
         while True:
             if echo360_cloud:
                 # automatically wait for the Auth Token from webdriver

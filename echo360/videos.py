@@ -206,50 +206,72 @@ class EchoCloudVideo(EchoVideo):
         print('')
         print('-' * 60)
         print('Downloading "{}"'.format(filename))
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         
         session = requests.Session()
             # load cookies
         for cookie in self._driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
-        r = session.get(self.url)
-        if not r.ok:
-            print("Error: Failed to get m3u8 info. Skipping this video")
-            return False
+        if self.url.endswith('.m3u8'):
+            r = session.get(self.url)
+            if not r.ok:
+                print("Error: Failed to get m3u8 info. Skipping this video")
+                return False
 
-        lines = [n for n in r.content.decode().split('\n')]
-        m3u8_video = None
-        m3u8_audio = None
-        for i in range(1, len(lines)):
-            if lines[i].strip() == "":
-                continue
-            if not lines[i].startswith('#'):
-                # check what content is this for by previous' line
-                # ALL THESE CHECKS ARE HAND-CRAFTED AND MIGHT BREAKS EASILY
-                if "RESOLUTION" in lines[i-1]:
-                    # there probably will be multiple video stream but the last one is
-                    # most likely the highest quality :) ..... assumption assumption
-                    m3u8_video = lines[i]
-                else:
-                    m3u8_audio = lines[i]
-        if m3u8_video is None or m3u8_audio is None:
-            print("ERROR: Failed to find audio/video m3u8... skipping this one")
-            return False
-        # NOW we can finally start downloading!
-        from hls_downloader import urljoin
+            lines = [n for n in r.content.decode().split('\n')]
+            m3u8_video = None
+            m3u8_audio = None
+            for i in range(1, len(lines)):
+                if lines[i].strip() == "":
+                    continue
+                if not lines[i].startswith('#'):
+                    # check what content is this for by previous' line
+                    # ALL THESE CHECKS ARE HAND-CRAFTED AND MIGHT BREAKS EASILY
+                    if "RESOLUTION" in lines[i-1]:
+                        # there probably will be multiple video stream but the last one is
+                        # most likely the highest quality :) ..... assumption assumption
+                        m3u8_video = lines[i]
+                    else:
+                        m3u8_audio = lines[i]
+            if m3u8_video is None or m3u8_audio is None:
+                print("ERROR: Failed to find audio/video m3u8... skipping this one")
+                return False
+            # NOW we can finally start downloading!
+            from hls_downloader import urljoin
 
-        print("  > Downloading audio:")
-        audio_file = self._download_url_to_dir(urljoin(
-            self.url, m3u8_audio), output_dir, filename + "_audio",
-            pool_size, convert_to_mp4=False)
-        print("  > Downloading video:")
-        video_file = self._download_url_to_dir(urljoin(
-            self.url, m3u8_video), output_dir, filename + "_video",
-            pool_size, convert_to_mp4=False)
-        sys.stdout.write('  > Converting to mp4... ')
-        sys.stdout.flush()
-        self.combine_audio_video(audio_file, video_file,
-                                 os.path.join(output_dir, filename + ".mp4"))
+            print("  > Downloading audio:")
+            audio_file = self._download_url_to_dir(urljoin(
+                self.url, m3u8_audio), output_dir, filename + "_audio",
+                pool_size, convert_to_mp4=False)
+            print("  > Downloading video:")
+            video_file = self._download_url_to_dir(urljoin(
+                self.url, m3u8_video), output_dir, filename + "_video",
+                pool_size, convert_to_mp4=False)
+            sys.stdout.write('  > Converting to mp4... ')
+            sys.stdout.flush()
+            self.combine_audio_video(audio_file, video_file,
+                                     os.path.join(output_dir, filename + ".mp4"))
+            # remove left-over plain audio/video files.
+            os.remove(audio_file)
+            os.remove(video_file)
+
+
+        else:  # ends with mp4
+            import tqdm
+
+            r = session.get(self.url, stream=True)
+            total_size = int(r.headers.get('content-length', 0))
+            block_size = 1024  # 1 kilobyte
+            with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
+                with open(os.path.join(output_dir, filename + '.mp4'), 'wb') as f:
+                    for data in r.iter_content(block_size):
+                        pbar.update(len(data))
+                        f.write(data)
+
+
+
         print('Done!')
         print('-' * 60)
         return True
@@ -266,9 +288,8 @@ class EchoCloudVideo(EchoVideo):
         ff.run()
 
 
-    def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5,
-                            method="from_json"):
-        if method == "brute_force":
+    def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
+        def brute_force():
             # this is the first method I tried, which sort of works
             stale_attempt = 1
             refresh_attempt = 1
@@ -281,7 +302,7 @@ class EchoCloudVideo(EchoVideo):
                         "https://[^,]*?m3u8",
                         self._driver.page_source.replace("\/", "/"))
                     )
-                    break
+                    return m3u8urls
 
                 except selenium.common.exceptions.TimeoutException:
                     if refresh_attempt >= max_attempts:
@@ -299,7 +320,7 @@ class EchoCloudVideo(EchoVideo):
                         raise
                     stale_attempt += 1
 
-        elif method == "from_json":
+        def from_json_m3u8():
             # seems like json would also contain that information so this method tries
             # to retrieve based on that
             if (not self.video_json['lesson']['hasVideo'] or
@@ -323,7 +344,36 @@ class EchoCloudVideo(EchoVideo):
                 new_m3u8urls.append("{}://content.{}{}".format(
                     parse_result.scheme, new_hostname, parse_result.path
                 ))
-            m3u8urls = new_m3u8urls
+            return new_m3u8urls
+
+        def from_json_mp4():
+            mp4_files = self.video_json['lesson']['video']['media']['media']['current']['primaryFiles']
+            urls = [obj['s3Url'] for obj in mp4_files]
+            if len(urls) == 0:
+                raise ValueError("Cannot find mp4 urls")
+            # usually hd is the last one. so we will sort in reverse order
+            return next(reversed(urls))
+
+        # try different methods in series, first the preferred ones, then the more
+        # obscure ones.
+        try:
+            _LOGGER.debug("Trying from_json method")
+            return from_json_mp4()
+        except Exception as e:
+            _LOGGER.debug("Encountered exception: {}".format(e))
+        try:
+            _LOGGER.debug("Trying from_json method")
+            m3u8urls = from_json_m3u8()
+        except Exception as e:
+            _LOGGER.debug("Encountered exception: {}".format(e))
+        try:
+            _LOGGER.debug("Trying brute_force method")
+            m3u8urls = brute_force()
+        except Exception as e:
+            _LOGGER.debug("Encountered exception: {}".format(e))
+            _LOGGER.debug("All methods had been exhausted.")
+            print("Tried all methods to retrieve videos but all had failed!")
+            raise
 
 
         # find one that has audio + video

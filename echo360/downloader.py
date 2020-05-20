@@ -239,7 +239,10 @@ class EchoDownloader(object):
         self._driver.get(self._course.url)
 
     def _get_filename(self, course, date, title):
-        filename = "{} - {} - {}".format(course, date, title)
+        if course:
+            filename = "{} - {} - {}".format(course, date, title)
+        else:
+            filename = "{} - {}".format(date, title)
         # replace invalid character for files
         return self.regex_replace_invalid.sub('_', filename)
 

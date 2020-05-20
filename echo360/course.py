@@ -146,23 +146,25 @@ class EchoCloudCourse(EchoCourse):
         if self._course_id is None:
             # self.course_data['data'][0]['lesson']['lesson']['displayName']
             # should be in the format of XXXXX (ABCD1001 - 2020 - Semester 1) ???
-            canidate = self.course_data['data'][0]['lesson']['lesson']['displayName']
-            result = re.search('^[^(]+', canidate)
-            if result is None:
-                # i give up! just use whatever :)
-                self._course_name = self.course_data['data'][0]['lesson']['lesson']['displayName']
-                self._course_id = ""
-            else:
-                self._course_name = result.group()
-                result = re.search('[(].+[)]', canidate)
-                self._course_id = result.group()[1:-1]
+            # canidate = self.course_data['data'][0]['lesson']['video']['published']['courseName']
+            # print(self._course_name)
+            # self._course_name = canidate
+            # Too much variant, it's too hard to have a unique way to extract course id.
+            # we will simply use course name and ignore any course id.
+            self._course_id = ""
+            # result = re.search('^[^(]+', canidate)
+            # if result is not None:
+            #     self._course_name = result.group()
+            #     result = re.search('[(].+[)]', canidate)
+            #     self._course_id = result.group()[1:-1]
         return self._course_id
 
     @property
     def course_name(self):
         if self._course_name is None:
-            self._course_id
-        return self.course_data['data'][0]['lesson']['lesson']['displayName']
+            candidate = self.course_data['data'][0]['lesson']['video']['published']['courseName']
+            self._course_name = candidate
+        return self._course_name
 
     @property
     def nice_name(self):
