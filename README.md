@@ -212,7 +212,7 @@ The UUID (Unified Unique IDentifier) is the last element of the URL. So in the a
 Echo360 cloud refers to websites in the format of `https://echo360.org[.xx]`. This module now officially support this platform.
 
 <p align="center">
-<img height="auto" width="900" src="docs/images/echo360cloud_home.png" alt="echo360 cloud course main page" />
+<img height="auto" width="700" src="docs/images/echo360cloud_home.png" alt="echo360 cloud course main page" />
 </p>
 
 This method requires you to setup SSO credentials, therefore, it needs to open up a browser for you to setup your own university's SSO credentials.
