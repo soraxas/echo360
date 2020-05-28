@@ -1,6 +1,6 @@
 # Echo360 Videos Downloader
 
-echo360 is a command-line Python tool that allows you to download lecture videos from any university's Echo360 lecture portal. All that's required is the particular course's url. See the FAQ for tips on how to find it.
+echo360 is a command-line Python tool that allows you to download lecture videos from any university's Echo360 system and echo360 Cloud platform. All that's required is the particular course's url. See the FAQ for tips on how to find it.
 
 The way this script works _should_ support all university's echo360 system in theory, see FAQ for details.
 
@@ -9,6 +9,8 @@ See it in action:
 <p align="center">
     <img width="700" height="auto" src="docs/images/demo.gif" alt="echo360 demo" />
 </p>
+
+**NEWS:** It now works with `echo360.org` platform as well. Special thanks to [*@cloudrac3r*](https://github.com/cloudrac3r) and *Emma* for their kind offering of providing sources and helped debugging it. Read [FAQ](#echo360-cloud) for details.
 
 # Getting Started
 
@@ -176,10 +178,16 @@ This is first built for the echo system in the University of Sydney, and then va
 ```shell
 https://$(hostname)/ess/portal/section/$(UUID)
 ```
+or
+```shell
+https://echo360.org[.xx]/
+```
 
 ... then it should be supported.
 
 The variables `$(hostname)` and `$(UUID)` are what differentiate different University's echo360 system. If there is no credentials needed (ie no need to login before accessing the page), then 90% of the time it should works. If login is needed, some extra work might need to be put in before it works for your university. If that is the case, create an issue to let me know.
+
+As for `echo360.org`, see [this](#echo360-cloud).
 
 ### How do I retrieve the Course URL for a course?
 
@@ -198,6 +206,30 @@ which you can verify is correct in the above screenshot. **This should be the fu
 The UUID (Unified Unique IDentifier) is the last element of the URL. So in the above example it's,
 
     041698d6-f43a-4b09-a39a-b90475a63530
+
+### echo360 cloud
+
+Echo360 cloud refers to websites in the format of `https://echo360.org[.xx]`. This module now officially support this platform.
+
+<img height="auto" src="docs/images/echo360cloud_home.png" alt="echo360 cloud course main page" />
+
+This method requires you to setup SSO credentials, therefore, it needs to open up a browser for you to setup your own university's SSO credentials.
+
+To download videos, run:
+```shell
+./run.sh https://echo360.org[.xx]/section/$(UUID)/home
+```
+where `[.xx]` is an optional country flag specific to your echo360 platform and `$(UUID)` is the unique identifier for your course. This should the url that you can retrieve from your course's *main page* like the following.
+
+<img height="auto" src="docs/images/echo360cloud_course-page.png" alt="echo360 cloud course main page" />
+
+Note that this implies `setup-credential` option and will use chrome-webdriver by default. If you don't have chrome or prefer to use firefox, run it with the ` --firefox` flag like so:
+```shell
+./run.sh https://echo360.org[.xx]/section/$(UUID)/home --firefox
+```
+
+After running the command, it will opens up a browser instance, most likely with a login page. You should then login with your student's credentials like what you would normally do. After you have successfully logged in, the module should automatically redirects you and continues. If the script hangs (e.g. failed to recognises that you have logged in), feel free to let me know.
+
 
 ### I'm not sure of how to run it?
 
