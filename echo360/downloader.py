@@ -4,7 +4,7 @@ import sys
 import logging
 import re
 
-from echo360.hls_downloader import Downloader
+from echo360.course import EchoCloudCourse
 from echo360.exceptions import EchoLoginError
 
 from pick import pick
@@ -26,7 +26,7 @@ class EchoDownloader(object):
                  password,
                  setup_credential,
                  use_local_binary=False,
-                 use_chrome=False,
+                 webdriver_to_use='phantomjs',
                  interactive_mode=False):
         self._course = course
         root_path = os.path.dirname(
@@ -47,17 +47,21 @@ class EchoDownloader(object):
         self._useragent = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         # self._driver = webdriver.PhantomJS()
 
-        dcap = dict(DesiredCapabilities.PHANTOMJS)
-        dcap["phantomjs.page.settings.userAgent"] = (
-            "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
-            "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25")
+        dcap = dict()
         if use_local_binary:
-            if use_chrome:
+            if webdriver_to_use == 'chrome':
                 from echo360.binary_downloader.chromedriver import ChromedriverDownloader
                 get_bin = ChromedriverDownloader().get_bin
+            elif webdriver_to_use == 'firefox':
+                from echo360.binary_downloader.firefoxdriver import FirefoxDownloader
+                get_bin = FirefoxDownloader().get_bin
             else:
                 from echo360.binary_downloader.phantomjs import PhantomjsDownloader
                 get_bin = PhantomjsDownloader().get_bin
+                dcap.update(DesiredCapabilities.PHANTOMJS)
+                dcap["phantomjs.page.settings.userAgent"] = (
+                    "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
+                    "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25")
             kwargs = {
                 'executable_path': get_bin(),
                 'desired_capabilities': dcap,
@@ -65,7 +69,7 @@ class EchoDownloader(object):
             }
         else:
             kwargs = {}
-        if use_chrome:
+        if webdriver_to_use == 'chrome':
             from selenium.webdriver.chrome.options import Options
             opts = Options()
             if not setup_credential:
@@ -74,9 +78,22 @@ class EchoDownloader(object):
             opts.add_argument("user-agent={}".format(self._useragent))
             kwargs['chrome_options'] = opts
             self._driver = webdriver.Chrome(**kwargs)
+        elif webdriver_to_use == 'firefox':
+            # from selenium.webdriver.firefox.options import Options
+            # opts = Options()
+            # if not setup_credential:
+            #     opts.add_argument("--headless")
+            # # opts.add_argument("--window-size=1920x1080")
+            # opts.add_argument("user-agent={}".format(self._useragent))
+            # kwargs['firefox_options'] = opts
+            profile = webdriver.FirefoxProfile()
+            profile.set_preference("general.useragent.override", self._useragent)
+            # driver = webdriver.Firefox(profile)
+            self._driver = webdriver.Firefox(profile, **kwargs)
         else:
             self._driver = webdriver.PhantomJS(**kwargs)
 
+        self.setup_credential = setup_credential
         # Monkey Patch, set the course's driver to the one from downloader
         self._course.set_driver(self._driver)
         self._videos = []
@@ -114,7 +131,9 @@ class EchoDownloader(object):
                 _LOGGER.debug("No username found (no need to login?)")
                 _LOGGER.debug("Dumping login page at %s: %s", self._course.url,
                               self._driver.page_source)
-        self.retrieve_real_uuid()
+        if not isinstance(self._course, EchoCloudCourse):
+            # for canvas echo360
+            self.retrieve_real_uuid()
         print('Done!')
 
     def loginWithCredentials(self):
@@ -158,16 +177,20 @@ class EchoDownloader(object):
             raise EchoLoginError(self._driver)
 
     def download_all(self):
-        sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
-        sys.stdout.flush()
-        self.login()
+        if self.setup_credential:
+            sys.stdout.write(">> I'm gonna assume you are responsible enough to had "
+                             "finished logged in by now ;)\n")
+        else:
+            sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
+            sys.stdout.flush()
+            self.login()
         sys.stdout.write('>> Retrieving echo360 Course Info... ')
         sys.stdout.flush()
         videos = self._course.get_videos().videos
         print('Done!')
         # change the output directory to be inside a folder named after the course
-        self._output_dir = os.path.join(self._output_dir, '{0} - {1}'.format(
-            self._course.course_id, self._course.course_name).strip())
+        self._output_dir = os.path.join(self._output_dir,
+                                        '{0}'.format(self._course.nice_name).strip())
         # replace invalid character for folder
         self.regex_replace_invalid.sub('_', self._output_dir)
 
@@ -177,10 +200,20 @@ class EchoDownloader(object):
         videos_to_be_download = []
         for video in reversed(filtered_videos):  # reverse so we download newest first
             lecture_number = self._find_pos(videos, video)
-            title = "Lecture {} [{}]".format(lecture_number + 1, video.title)
-            filename = self._get_filename(self._course.course_id, video.date,
-                                          title)
-            videos_to_be_download.append((filename, video))
+            # Sometimes a video could have multiple part. This special method returns a
+            # generator where: (i) if it's a multi-part video it will contains multiple
+            # videos and (ii) if it is NOT a multi-part video, it will just
+            # returns itself
+            sub_videos = video.get_all_parts()
+            for sub_i, sub_video in reversed(list(enumerate(sub_videos))):
+                sub_lecture_num = lecture_number + 1
+                # use a friendly way to name sub-part lectures
+                if len(sub_videos) > 1:
+                    sub_lecture_num = "{}.{}".format(sub_lecture_num, sub_i + 1)
+                title = "Lecture {} [{}]".format(sub_lecture_num, sub_video.title)
+                filename = self._get_filename(self._course.course_id, sub_video.date,
+                                              title)
+                videos_to_be_download.append((filename, sub_video))
         if self.interactive_mode:
             title = "Select video(s) to be downloaded (SPACE to mark, ENTER to continue):"
             selected = pick([v[0] for v in videos_to_be_download], title,
@@ -188,16 +221,19 @@ class EchoDownloader(object):
             videos_to_be_download = [videos_to_be_download[s[1]] for s in selected]
 
         print('=' * 60)
-        print('    Course: {0} - {1}'.format(self._course.course_id,
-                                             self._course.course_name))
+        print('    Course: {0}'.format(self._course.nice_name))
         print('      Total videos to download: {0} out of {1}'.format(
             len(videos_to_be_download), len(videos)))
         print('=' * 60)
 
         downloaded_videos = []
         for filename, video in videos_to_be_download:
-            self._download_as(video.url, filename)
-            downloaded_videos.insert(0, filename)
+            if video.url is False:
+                print(">> Skipping Lecture '{0}' as it says it does "
+                      "not contain any video.".format(filename))
+            else:
+                if video.download(self._output_dir, filename):
+                    downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
         self._driver.close()
 
@@ -209,26 +245,14 @@ class EchoDownloader(object):
     def useragent(self, useragent):
         self._useragent = useragent
 
-    def _download_as(self, video, filename):
-        print('')
-        print('-' * 60)
-        print('Downloading "{}"'.format(filename))
-        echo360_downloader = Downloader(50)
-        echo360_downloader.run(video, self._output_dir)
-
-        # rename file
-        ext = echo360_downloader.result_file_name
-        ext = ext[ext.rfind('.') + 1:]
-        os.rename(
-            os.path.join(echo360_downloader.result_file_name),
-            os.path.join(self._output_dir, '{0}.{1}'.format(filename, ext)))
-        print('-' * 60)
-
     def _initialize(self, echo_course):
         self._driver.get(self._course.url)
 
     def _get_filename(self, course, date, title):
-        filename = "{} - {} - {}".format(course, date, title)
+        if course:
+            filename = "{} - {} - {}".format(course, date, title)
+        else:
+            filename = "{} - {}".format(date, title)
         # replace invalid character for files
         return self.regex_replace_invalid.sub('_', filename)
 
@@ -237,15 +261,13 @@ class EchoDownloader(object):
         return self._date_range[0] <= the_date and the_date <= self._date_range[1]
 
     def _find_pos(self, videos, the_video):
-        for i, video in enumerate(videos):
-            if video == the_video:  # compare by object id, because date could possibly be the same in some case.
-                return i
+        # compare by object id, because date could possibly be the same in some case.
+        return videos.index(the_video)
 
     def success_msg(self, course_name, videos):
         bar = '=' * 65
         msg = '\n{0}\n'.format(bar)
-        msg += '    Course: {0} - {1}'.format(self._course.course_id,
-                                              self._course.course_name)
+        msg += '    Course: {0}'.format(self._course.nice_name)
         msg += '\n{0}\n'.format(bar)
         msg += '    Successfully downloaded:\n'
         for i in videos:

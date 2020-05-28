@@ -1,9 +1,12 @@
 import json
+import re
 import sys
+
+import requests
 import selenium
 import logging
 
-from echo360.videos import EchoVideos
+from echo360.videos import EchoVideos, EchoCloudVideos
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -11,8 +14,8 @@ _LOGGER = logging.getLogger(__name__)
 class EchoCourse(object):
 
     def __init__(self, uuid, hostname=None):
-        self._course_id = ""
-        self._course_name = ""
+        self._course_id = None
+        self._course_name = None
         self._uuid = uuid
         self._videos = None
         self._driver = None
@@ -54,7 +57,7 @@ class EchoCourse(object):
 
     @property
     def course_id(self):
-        if self._course_id == "":
+        if self._course_id is None:
             try:
                 # driver = webdriver.PhantomJS() #TODO Redo this. Maybe use a singleton factory to request the lecho360 driver?s
                 self.driver.get(self.url) # Initialize to establish the 'anon' cookie that Echo360 sends.
@@ -73,7 +76,7 @@ class EchoCourse(object):
 
     @property
     def course_name(self):
-        if self._course_name == "":
+        if self._course_name is None:
             # trigger getting course_id to get course name as well
             self.course_id
         if type(self._course_name) != str:
@@ -87,21 +90,21 @@ class EchoCourse(object):
             self._blow_up("webdriver not set yet!!!", "")
         return self._driver
 
-    def _get_course_data(self):
-            try:
-                self.driver.get(self.video_url)
-                _LOGGER.debug("Dumping course page at %s: %s",
-                              self.video_url,
-                              self._driver.page_source)
-                # self.driver.get_screenshot_as_file('./2.png')
-                # print(dir(self.driver))
-                # print('ha')
-                # print(self.driver.page_source)
-                json_str = self.driver.find_element_by_tag_name("pre").text
+    @property
+    def nice_name(self):
+        return "{0} - {1}".format(self.course_id, self.course_name)
 
-                return json.loads(json_str)
-            except ValueError as e:
-                self._blow_up("Unable to retrieve JSON (course_data) from url", e)
+    def _get_course_data(self):
+        try:
+            self.driver.get(self.video_url)
+            _LOGGER.debug("Dumping course page at %s: %s",
+                            self.video_url,
+                            self._driver.page_source)
+            json_str = self.driver.find_element_by_tag_name("pre").text
+        except ValueError as e:
+            raise Exception("Unable to retrieve JSON (course_data) from url", e)
+        self.course_data = json.loads(json_str)
+        return self.course_data
 
     def set_driver(self, driver):
         self._driver = driver
@@ -110,3 +113,81 @@ class EchoCourse(object):
         print(msg)
         print("Exception: {}".format(str(e)))
         sys.exit(1)
+
+
+class EchoCloudCourse(EchoCourse):
+
+    def __init__(self, *args, **kwargs):
+        super(EchoCloudCourse, self).__init__(*args, **kwargs)
+
+    def get_videos(self):
+        if self._driver is None:
+            raise Exception("webdriver not set yet!!!", "")
+        if not self._videos:
+            try:
+                course_data_json = self._get_course_data()
+                videos_json = course_data_json["data"]
+                self._videos = EchoCloudVideos(videos_json, self._driver, self.hostname)
+            # except KeyError as e:
+            #     print("Unable to parse course videos from JSON (course_data)")
+            #     raise e
+            except selenium.common.exceptions.NoSuchElementException as e:
+                print("selenium cannot find given elements")
+                raise e
+
+        return self._videos
+
+    @property
+    def video_url(self):
+        return "{}/section/{}/syllabus".format(self._hostname, self._uuid)
+
+    @property
+    def course_id(self):
+        if self._course_id is None:
+            # self.course_data['data'][0]['lesson']['lesson']['displayName']
+            # should be in the format of XXXXX (ABCD1001 - 2020 - Semester 1) ???
+            # canidate = self.course_data['data'][0]['lesson']['video']['published']['courseName']
+            # print(self._course_name)
+            # self._course_name = canidate
+            # Too much variant, it's too hard to have a unique way to extract course id.
+            # we will simply use course name and ignore any course id.
+            self._course_id = ""
+            # result = re.search('^[^(]+', canidate)
+            # if result is not None:
+            #     self._course_name = result.group()
+            #     result = re.search('[(].+[)]', canidate)
+            #     self._course_id = result.group()[1:-1]
+        return self._course_id
+
+    @property
+    def course_name(self):
+        if self._course_name is None:
+            candidate = self.course_data['data'][0]['lesson']['video']['published']['courseName']
+            self._course_name = candidate
+        return self._course_name
+
+    @property
+    def nice_name(self):
+        return self.course_name
+
+    def _get_course_data(self):
+        try:
+            self.driver.get(self.video_url)
+            _LOGGER.debug("Dumping course page at %s: %s",
+                          self.video_url,
+                          self._driver.page_source)
+            # use requests to retrieve data
+            session = requests.Session()
+            # load cookies
+            for cookie in self._driver.get_cookies():
+                session.cookies.set(cookie["name"], cookie["value"])
+
+            r = session.get(self.video_url)
+            if not r.ok:
+                raise Exception("Error: Failed to get m3u8 info for EchoCourse!")
+
+            json_str = r.content
+        except ValueError as e:
+            raise Exception("Unable to retrieve JSON (course_data) from url", e)
+        self.course_data = json.loads(json_str)
+        return self.course_data

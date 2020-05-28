@@ -3,6 +3,7 @@ import os
 import sys
 import re
 import logging
+import time
 from datetime import datetime
 try:
     import pick
@@ -14,7 +15,7 @@ except ImportError as e:
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
 from echo360.exceptions import EchoLoginError
 from echo360.downloader import EchoDownloader
-from echo360.course import EchoCourse
+from echo360.course import EchoCourse, EchoCloudCourse
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
@@ -102,6 +103,13 @@ def handle_args():
         help="Use Chrome Driver instead of phantomjs webdriver. You \
                               must have chromedriver installed in your PATH.")
     parser.add_argument(
+        "--firefox",
+        action='store_true',
+        default=False,
+        dest="use_firefox",
+        help="Use Firefox Driver instead of phantomjs webdriver. You \
+                              must have geckodriver installed in your PATH.")
+    parser.add_argument(
         "--interactive",
         '-i',
         action='store_true',
@@ -144,27 +152,39 @@ def handle_args():
         )
         _LOGGER.info(
             "Use the full URL if you want to use this in other University")
-    course_uuid = re.search('[^/]+(?=/$|$)',
-                            course_url)  # retrieve the last part of the URL
-    course_uuid = course_uuid.group()
 
     args_without_sensitive_info = dict(args)
     args_without_sensitive_info.pop('unikey', None)
     args_without_sensitive_info.pop('password', None)
     _LOGGER.debug("Input args: %s", args_without_sensitive_info)
-    _LOGGER.debug("Hostname: %s, UUID: %s", course_hostname, course_uuid)
+    _LOGGER.debug("Hostname: %s, UUID: %s", course_hostname, course_url)
 
-    return (course_uuid, course_hostname, output_path, after_date, before_date,
+    webdriver_to_use = "phantomjs"
+    if args['use_chrome']:
+        webdriver_to_use = "chrome"
+    elif args['use_firefox']:
+        webdriver_to_use = "firefox"
+
+    return (course_url, course_hostname, output_path, after_date, before_date,
             username, password, args['setup_credential'], args['download_binary'],
-            args['use_chrome'], args['interactive'], args['enable_degbug'])
+            webdriver_to_use, args['interactive'], args['enable_degbug'])
 
 
 def main():
-    (course_uuid, course_hostname, output_path, after_date, before_date,
-     username, password, setup_credential, download_binary, use_chrome,
+    (course_url, course_hostname, output_path, after_date, before_date,
+     username, password, setup_credential, download_binary, webdriver_to_use,
      interactive_mode, enable_degbug) = handle_args()
 
     setup_logging(enable_degbug)
+
+    usingEcho360Cloud = False
+    if "echo360.org" in course_hostname:
+        print("> Echo360 Cloud platform detected")
+        print("> This implies setup_credential, and using web_driver")
+        print(">> Please login with your SSO details and type continue when logged in.")
+        print('-' * 65)
+        usingEcho360Cloud = True
+        setup_credential = True
 
     def cmd_exists(x):
         any(
@@ -174,11 +194,15 @@ def main():
     # NOTE: local binary will always override system PATH binary
     use_local_binary = True
 
-    if setup_credential: # setup credentials must use chrome driver
-        use_chrome = True
-    if use_chrome:
+    if setup_credential and webdriver_to_use == 'phantomjs':
+        # setup credentials must use web driver
+        webdriver_to_use = 'chrome'
+    if webdriver_to_use == 'chrome':
         from echo360.binary_downloader.chromedriver import ChromedriverDownloader as binary_downloader
         binary_type = 'chromedriver'
+    elif webdriver_to_use == 'firefox':
+        from echo360.binary_downloader.firefoxdriver import FirefoxDownloader as binary_downloader
+        binary_type = 'geckodriver'
     else:
         from echo360.binary_downloader.phantomjs import PhantomjsDownloader as binary_downloader
         binary_type = 'phantomjs'
@@ -189,9 +213,7 @@ def main():
     # First test for existance of localbinary file
     if not os.path.isfile(binary_downloader.get_bin()):
         # If failed, then test for existance of global executable in PATH
-        if (cmd_exists('chromedriver')
-                and use_chrome) or (cmd_exists('phantomjs')
-                                    and not use_chrome):
+        if cmd_exists(binary_type):
             use_local_binary = False
             _LOGGER.debug("Using global binary file")
         else:
@@ -203,7 +225,15 @@ def main():
         start_download_binary(binary_downloader, binary_type, manual=True)
         exit(0)
 
-    course = EchoCourse(course_uuid, course_hostname)
+    if usingEcho360Cloud:
+        # echo360 cloud
+        course_uuid = re.search('[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+',
+                                course_url).group()  # retrieve the last part of the URL
+        course = EchoCloudCourse(course_uuid, course_hostname)
+    else:
+        course_uuid = re.search('[^/]+(?=/$|$)',
+                                course_url).group()  # retrieve the last part of the URL
+        course = EchoCourse(course_uuid, course_hostname)
     downloader = EchoDownloader(
         course,
         output_path,
@@ -212,14 +242,15 @@ def main():
         password=password,
         setup_credential=setup_credential,
         use_local_binary=use_local_binary,
-        use_chrome=use_chrome,
+        webdriver_to_use=webdriver_to_use,
         interactive_mode=interactive_mode)
 
-    print('>>> Download will use "{}" webdriver from {} executable <<<'.format(
-        'ChromeDriver' if use_chrome else 'PhantomJS', 'LOCAL'
+    _LOGGER.debug('>>> Download will use "{}" webdriver from {} executable <<<'.format(
+        binary_type, 'LOCAL'
         if use_local_binary else 'GLOBAL'))
     if setup_credential:
-        run_setup_credential(downloader._driver, course_hostname)
+        run_setup_credential(downloader._driver, course_hostname, echo360_cloud=True)
+        downloader._driver.set_window_size(0, 0)
     downloader.download_all()
 
 def start_download_binary(binary_downloader, binary_type, manual=False):
@@ -232,19 +263,28 @@ def start_download_binary(binary_downloader, binary_type, manual=False):
     print('Done!')
     print('=' * 65)
 
-def run_setup_credential(chromedriver, url):
-    import threading
-    chromedriver.get(url)
+def run_setup_credential(webdriver, url, echo360_cloud=False):
+    webdriver.get(url)
     try:
         # for making it compatiable with Python 2 & 3
         input = raw_input
     except NameError:
         pass
     try:
+        if echo360_cloud:
+            print(" >> After you finished logging into echo360 cloud, the window "
+                  "should be automatically redirected and continued. If it got stuck, "
+                  "please contact the author :)")
         while True:
-            user_inputs = input("> Type 'continue' and press [enter]\n")
-            if user_inputs.lower() == 'continue':
-                break
+            if echo360_cloud:
+                # automatically wait for the Auth Token from webdriver
+                if any('ECHO_JWT' in c['name'] for c in webdriver.get_cookies()):
+                    break
+                time.sleep(2)
+            else:
+                user_inputs = input("> Type 'continue' and press [enter]\n")
+                if user_inputs.lower() == 'continue':
+                    break
     except KeyboardInterrupt:
         pass
 
