@@ -200,10 +200,20 @@ class EchoDownloader(object):
         videos_to_be_download = []
         for video in reversed(filtered_videos):  # reverse so we download newest first
             lecture_number = self._find_pos(videos, video)
-            title = "Lecture {} [{}]".format(lecture_number + 1, video.title)
-            filename = self._get_filename(self._course.course_id, video.date,
-                                          title)
-            videos_to_be_download.append((filename, video))
+            # Sometimes a video could have multiple part. This special method returns a
+            # generator where: (i) if it's a multi-part video it will contains multiple
+            # videos and (ii) if it is NOT a multi-part video, it will just
+            # returns itself
+            sub_videos = video.get_all_parts()
+            for sub_i, sub_video in reversed(list(enumerate(sub_videos))):
+                sub_lecture_num = lecture_number + 1
+                # use a friendly way to name sub-part lectures
+                if len(sub_videos) > 1:
+                    sub_lecture_num = "{}.{}".format(sub_lecture_num, sub_i + 1)
+                title = "Lecture {} [{}]".format(sub_lecture_num, sub_video.title)
+                filename = self._get_filename(self._course.course_id, sub_video.date,
+                                              title)
+                videos_to_be_download.append((filename, sub_video))
         if self.interactive_mode:
             title = "Select video(s) to be downloaded (SPACE to mark, ENTER to continue):"
             selected = pick([v[0] for v in videos_to_be_download], title,
@@ -251,9 +261,8 @@ class EchoDownloader(object):
         return self._date_range[0] <= the_date and the_date <= self._date_range[1]
 
     def _find_pos(self, videos, the_video):
-        for i, video in enumerate(videos):
-            if video == the_video:  # compare by object id, because date could possibly be the same in some case.
-                return i
+        # compare by object id, because date could possibly be the same in some case.
+        return videos.index(the_video)
 
     def success_msg(self, course_name, videos):
         bar = '=' * 65

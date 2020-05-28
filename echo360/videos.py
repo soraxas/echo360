@@ -157,6 +157,9 @@ class EchoVideo(object):
             result_full_path)
         return result_full_path
 
+    def get_all_parts(self):
+        return [self]
+
 
 class EchoCloudVideos(EchoVideos):
     def __init__(self, videos_json, driver, hostname):
@@ -187,6 +190,18 @@ class EchoCloudVideo(EchoVideo):
         self.hostname = hostname
         self._driver = driver
         self.video_json = video_json
+        self.is_multipart_video = False
+        self.sub_videos = [self]
+        if 'lessons' in video_json:
+            # IS a multi-part lesson.
+            self.sub_videos = [EchoCloudSubVideo(sub_video_json, driver, hostname,
+                                                 group_name=video_json["groupInfo"]["name"])
+                               for sub_video_json in video_json['lessons']]
+            self.is_multipart_video = True
+            # THIS OBJECT SHOULD NOT BE USED ANYMORE as no further
+            # processing will be proceeded.
+            self._date = self.get_date(video_json)
+            return
 
         video_id = "{0}".format(video_json["lesson"]["lesson"]["id"])
         self.video_id = str(video_id)  # cast back to string
@@ -395,6 +410,33 @@ class EchoCloudVideo(EchoVideo):
         m3u8urls = reversed(m3u8urls)
         return next(m3u8urls)
 
-
     def _extract_date(self, video_json):
-        return video_json["lesson"]["startTimeUTC"]
+        if self.is_multipart_video:
+            if video_json["groupInfo"]["createdAt"] is not None:
+                return video_json["groupInfo"]["createdAt"]
+            if video_json["groupInfo"]["u'updatedAt'"] is not None:
+                return video_json["groupInfo"]["u'updatedAt'"]
+
+        if "startTimeUTC" in video_json["lesson"]:
+            if video_json["lesson"]["startTimeUTC"] is not None:
+                return video_json["lesson"]["startTimeUTC"]
+        if "createdAt" in video_json["lesson"]["lesson"]:
+            return video_json["lesson"]["lesson"]["createdAt"]
+
+    def get_all_parts(self):
+        return self.sub_videos
+
+
+class EchoCloudSubVideo(EchoCloudVideo):
+    """Some video in echo360 cloud is multi-part and this represents it."""
+
+    def __init__(self, video_json, driver, hostname, group_name):
+        super(EchoCloudSubVideo, self).__init__(video_json, driver, hostname)
+        self.group_name = group_name
+
+    @property
+    def title(self):
+        if type(self._title) != str:
+            # it's type unicode for python2
+            self._title = self._title.encode('utf-8')
+        return "{} - {}".format(self.group_name, self._title)
