@@ -232,6 +232,10 @@ def main():
                                 course_url).group()  # retrieve the last part of the URL
         course = EchoCloudCourse(course_uuid, course_hostname)
     else:
+        # import it here for monkey patching gevent, to fix the followings:
+        # MonkeyPatchWarning: Monkey-patching ssl after ssl has already been 
+        # imported may lead to errors, including RecursionError on Python 3.6.
+        from . import hls_downloader
         course_uuid = re.search('[^/]+(?=/$|$)',
                                 course_url).group()  # retrieve the last part of the URL
         course = EchoCourse(course_uuid, course_hostname)

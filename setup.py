@@ -23,7 +23,7 @@ setuptools.setup(
     platforms='linux, macos, windows',
     entry_points={
     'console_scripts': [
-        'echo360download=echo360.main:main',
+        'echo360-download=echo360.main:main',
         ],
         },
     package_data={'echo360': ['*.py']},

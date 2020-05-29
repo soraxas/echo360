@@ -1,6 +1,3 @@
-from gevent import monkey
-monkey.patch_all()
-from gevent.pool import Pool
 import ffmpy
 import gevent
 import requests
