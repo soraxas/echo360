@@ -6,7 +6,7 @@ import requests
 import selenium
 import logging
 
-from echo360.videos import EchoVideos, EchoCloudVideos
+from .videos import EchoVideos, EchoCloudVideos
 
 _LOGGER = logging.getLogger(__name__)
 

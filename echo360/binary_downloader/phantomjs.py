@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-from echo360.binary_downloader.downloader import BinaryDownloader
+from .downloader import BinaryDownloader
 
 
 class PhantomjsDownloader(BinaryDownloader):

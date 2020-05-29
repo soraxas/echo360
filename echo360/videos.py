@@ -15,7 +15,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException
 
-from echo360.hls_downloader import Downloader
+from .hls_downloader import Downloader
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -254,7 +254,7 @@ class EchoCloudVideo(EchoVideo):
                 print("ERROR: Failed to find audio/video m3u8... skipping this one")
                 return False
             # NOW we can finally start downloading!
-            from hls_downloader import urljoin
+            from .hls_downloader import urljoin
 
             print("  > Downloading audio:")
             audio_file = self._download_url_to_dir(urljoin(

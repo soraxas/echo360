@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import os
 import sys
@@ -14,6 +13,7 @@ except ImportError as e:
         raise e
     import subprocess
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
+
 from .echo_exceptions import EchoLoginError
 from .downloader import EchoDownloader
 from .course import EchoCourse, EchoCloudCourse
@@ -307,11 +307,3 @@ def setup_logging(enable_degbug=False):
     console.setLevel(logging.INFO)
     console.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
     logging.getLogger('').addHandler(console)  # add handler to the root logger
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except EchoLoginError:
-        # raise KeyboardInterrupt
-        pass

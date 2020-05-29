@@ -4,8 +4,8 @@ import sys
 import logging
 import re
 
-from echo360.course import EchoCloudCourse
-from echo360.exceptions import EchoLoginError
+from .course import EchoCloudCourse
+from .echo_exceptions import EchoLoginError
 
 from pick import pick
 from selenium import webdriver
@@ -50,13 +50,13 @@ class EchoDownloader(object):
         dcap = dict()
         if use_local_binary:
             if webdriver_to_use == 'chrome':
-                from echo360.binary_downloader.chromedriver import ChromedriverDownloader
+                from .binary_downloader.chromedriver import ChromedriverDownloader
                 get_bin = ChromedriverDownloader().get_bin
             elif webdriver_to_use == 'firefox':
-                from echo360.binary_downloader.firefoxdriver import FirefoxDownloader
+                from .binary_downloader.firefoxdriver import FirefoxDownloader
                 get_bin = FirefoxDownloader().get_bin
             else:
-                from echo360.binary_downloader.phantomjs import PhantomjsDownloader
+                from .binary_downloader.phantomjs import PhantomjsDownloader
                 get_bin = PhantomjsDownloader().get_bin
                 dcap.update(DesiredCapabilities.PHANTOMJS)
                 dcap["phantomjs.page.settings.userAgent"] = (
@@ -94,7 +94,7 @@ class EchoDownloader(object):
             self._driver = webdriver.PhantomJS(**kwargs)
 
         self.setup_credential = setup_credential
-        # Monkey Patch, set the course's driver to the one from downloader
+        # Monkey Patch, set the course's driver to the one from .downloader
         self._course.set_driver(self._driver)
         self._videos = []
 

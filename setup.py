@@ -21,7 +21,11 @@ setuptools.setup(
     python_requires='>=2.7',
     install_requires=required,
     platforms='linux, macos, windows',
-    scripts=['echo360download'],
+    entry_points={
+    'console_scripts': [
+        'echo360download=echo360.main:main',
+        ],
+        },
     package_data={'echo360': ['*.py']},
     packages=setuptools.find_packages(),
     classifiers=[

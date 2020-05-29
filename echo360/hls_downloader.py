@@ -7,7 +7,7 @@ import requests
 import os, sys
 import time
 
-from echo360.exceptions import HlsDownloaderError
+from .echo_exceptions import HlsDownloaderError
 
 def urljoin(a, b):
     # get url relative root path
