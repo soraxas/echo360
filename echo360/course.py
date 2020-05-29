@@ -162,8 +162,17 @@ class EchoCloudCourse(EchoCourse):
     @property
     def course_name(self):
         if self._course_name is None:
-            candidate = self.course_data['data'][0]['lesson']['video']['published']['courseName']
-            self._course_name = candidate
+            # try each available video as some video might be special has contains
+            # no information about the course.
+            for v in self.course_data['data']:
+                try:
+                    self._course_name = v['lesson']['video']['published']['courseName']
+                    break
+                except KeyError:
+                    pass
+            if self._course_name is None:
+                # no available course name found...?
+                self._course_name = "[[UNTITLED]]"
         return self._course_name
 
     @property
