@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYTHON=python
+PYTHON=python3
 VENV_NAME=_echo360venv
 
 error_exit(){

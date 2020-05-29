@@ -254,7 +254,7 @@ def main():
         binary_type, 'LOCAL'
         if use_local_binary else 'GLOBAL'))
     if setup_credential:
-        run_setup_credential(downloader._driver, course_hostname, echo360_cloud=True)
+        run_setup_credential(downloader._driver, course_hostname, username, password, echo360_cloud=True)
         downloader._driver.set_window_size(0, 0)
     downloader.download_all()
 
@@ -268,7 +268,7 @@ def start_download_binary(binary_downloader, binary_type, manual=False):
     print('Done!')
     print('=' * 65)
 
-def run_setup_credential(webdriver, url, echo360_cloud=False):
+def run_setup_credential(webdriver, url, username, password, echo360_cloud=False):
     webdriver.get(url)
     try:
         # for making it compatiable with Python 2 & 3
@@ -277,9 +277,16 @@ def run_setup_credential(webdriver, url, echo360_cloud=False):
         pass
     try:
         if echo360_cloud:
-            print(" >> After you finished logging into echo360 cloud, the window "
-                  "should be automatically redirected and continued. If it got stuck, "
-                  "please contact the author :)")
+            if username==None and password==None:
+                print(" >> After you finished logging into echo360 cloud, the window "
+                    "should be automatically redirected and continued. If it got stuck, "
+                    "please contact the author :)")
+            else:
+                webdriver.find_element_by_xpath('//*[@id="email"]').send_keys(username)
+                webdriver.find_element_by_xpath('//*[@id="submitBtn"]').click()
+
+                webdriver.find_element_by_xpath('//*[@id="password"]').send_keys(password)
+                webdriver.find_element_by_xpath('//*[@id="submitBtn"]').click()
         while True:
             if echo360_cloud:
                 # automatically wait for the Auth Token from webdriver
