@@ -36,9 +36,9 @@ setuptools.setup(
         "Topic :: System :: System Shells",
         "Topic :: Terminals",
         "Topic :: System :: Networking",
-        "License :: OSI Approved :: BSD License"
+        "License :: OSI Approved :: MIT"
     ],
-    license="BSD",
+    license="MIT",
     author="soraxas",
     author_email="oscar@tinyiu.com"
 )
