@@ -195,7 +195,7 @@ class EchoCloudCourse(EchoCourse):
             if not r.ok:
                 raise Exception("Error: Failed to get m3u8 info for EchoCourse!")
 
-            json_str = r.content
+            json_str = r.text
         except ValueError as e:
             raise Exception("Unable to retrieve JSON (course_data) from url", e)
         self.course_data = json.loads(json_str)
