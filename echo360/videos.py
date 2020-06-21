@@ -304,20 +304,19 @@ class EchoCloudVideo(EchoVideo):
 
 
     def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
-        def brute_force():
+        def brute_force_get_url(suffix):
             # this is the first method I tried, which sort of works
             stale_attempt = 1
             refresh_attempt = 1
             while True:
                 self._driver.get(video_url)
                 try:
-                    # find all m3u8 files
                     # the replace is for reversing the escape by the escapped js in the page source
-                    m3u8urls = set(re.findall(
-                        "https://[^,]*?m3u8",
+                    urls = set(re.findall(
+                        'https://[^,"]*?[.]{}'.format(suffix),
                         self._driver.page_source.replace("\/", "/"))
                     )
-                    return m3u8urls
+                    return urls
 
                 except selenium.common.exceptions.TimeoutException:
                     if refresh_attempt >= max_attempts:
@@ -334,6 +333,18 @@ class EchoCloudVideo(EchoVideo):
                             Possibly internet problem?'.format(max_attempts))
                         raise
                     stale_attempt += 1
+                    
+        def brute_force_get_mp4_url():
+            """Forcefully try to find all .mp4 url in the page source"""
+            urls = brute_force_get_url(suffix='mp4')
+            if len(urls) == 0:
+                raise Exception("None were found.")
+            # in many cases, there would be urls in the format of http://xxx.{hd1,hd2,sd1,sd2}
+            # I'm not sure what does the 1 and 2 in hd1,hd2 stands for, but hd and sd should means
+            # high or low definition.
+            # Let's prioritise hd over sd, and 1 over 2 (the latter is arbitary)
+            # which happens to be the natual order of letter anyway, so we can simply use sorted.
+            return next(sorted(urls))
 
         def from_json_m3u8():
             # seems like json would also contain that information so this method tries
@@ -382,8 +393,13 @@ class EchoCloudVideo(EchoVideo):
         except Exception as e:
             _LOGGER.debug("Encountered exception: {}".format(e))
         try:
-            _LOGGER.debug("Trying brute_force method")
-            m3u8urls = brute_force()
+            _LOGGER.debug("Trying brute_force_all_mp4 method")
+            return brute_force_get_mp4_url()
+        except Exception as e:
+            _LOGGER.debug("Encountered exception: {}".format(e))
+        try:
+            _LOGGER.debug("Trying brute_force_all_m3u8 method")
+            m3u8urls = brute_force_get_url(suffix='m3u8')
         except Exception as e:
             _LOGGER.debug("Encountered exception: {}".format(e))
             _LOGGER.debug("All methods had been exhausted.")
