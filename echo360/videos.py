@@ -372,12 +372,12 @@ class EchoCloudVideo(EchoVideo):
         # try different methods in series, first the preferred ones, then the more
         # obscure ones.
         try:
-            _LOGGER.debug("Trying from_json method")
+            _LOGGER.debug("Trying from_json_mp4 method")
             return from_json_mp4()
         except Exception as e:
             _LOGGER.debug("Encountered exception: {}".format(e))
         try:
-            _LOGGER.debug("Trying from_json method")
+            _LOGGER.debug("Trying from_json_m3u8 method")
             m3u8urls = from_json_m3u8()
         except Exception as e:
             _LOGGER.debug("Encountered exception: {}".format(e))
