@@ -66,6 +66,7 @@ class EchoVideo(object):
                           self._driver.page_source)
 
             m3u8_url = self._loop_find_m3u8_url(video_url, waitsecond=30)
+            _LOGGER.debug("Found the following urls %s", m3u8_url)
             self._url = m3u8_url
 
             self._date = self.get_date(video_json["startTime"])
@@ -212,6 +213,7 @@ class EchoCloudVideo(EchoVideo):
                       self._driver.page_source)
 
         m3u8_url = self._loop_find_m3u8_url(self.video_url, waitsecond=30)
+        _LOGGER.debug("Found the following urls %s", m3u8_url)
         self._url = m3u8_url
 
         self._date = self.get_date(video_json)
