@@ -346,7 +346,7 @@ class EchoCloudVideo(EchoVideo):
             # high or low definition.
             # Let's prioritise hd over sd, and 1 over 2 (the latter is arbitary)
             # which happens to be the natual order of letter anyway, so we can simply use sorted.
-            return next(sorted(urls))
+            return sorted(urls)[0]
 
         def from_json_m3u8():
             # seems like json would also contain that information so this method tries
