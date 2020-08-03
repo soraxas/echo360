@@ -169,6 +169,18 @@ Note: sometime it works better than phantomjs in some system
     --chrome
 ```
 
+### Use headless mode in echo360.org
+
+Simply by supplying a username and password, your chromedriver session will be headless. 
+This means there will be no log in window and you can run this on a server for example.
+
+```shell
+>>> ./run.sh                  \
+    https://echo360.org.uk/section/534de63e-ecab-1a93-1ea8-e8225825dce/home \
+    -u username@university.edu
+    -p password
+```
+
 # FAQ
 
 ### Is my university supported?

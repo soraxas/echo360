@@ -72,7 +72,7 @@ class EchoDownloader(object):
         if webdriver_to_use == 'chrome':
             from selenium.webdriver.chrome.options import Options
             opts = Options()
-            if not setup_credential:
+            if self._username!=None and self._password!=None:
                 opts.add_argument("--headless")
             opts.add_argument("--window-size=1920x1080")
             opts.add_argument("user-agent={}".format(self._useragent))

@@ -58,3 +58,6 @@ target/
 # appp specific folders
 bin/
 default_out_path/
+
+#
+.vscode/
