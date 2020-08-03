@@ -4,6 +4,7 @@ from gevent.pool import Pool
 import requests
 import os, sys
 import time
+import tqdm
 
 from .echo_exceptions import HlsDownloaderError
 
@@ -119,11 +120,43 @@ class Downloader:
                 self._result_file_name = infile_name
 
     def _download(self, ts_list):
-        self.pool.map(self._worker, ts_list)
+        if len(ts_list) == 1:
+            self._worker_single(ts_list[0])
+        else:
+            self.pool.map(self._worker, ts_list)
         if self.failed:
             ts_list = self.failed
             self.failed = []
             self._download(ts_list)
+
+    def _worker_single(self, ts_tuple):
+        url = ts_tuple[0]
+        index = ts_tuple[1]
+        retry = self.retry
+        update_progress(self.ts_current, self.ts_total, title='  > {}'.format('Progress'))
+        while retry:
+            try:
+                r = self.session.get(url, stream=True, timeout=20)
+                total_size = int(r.headers.get('content-length', 0))
+                block_size = 1024  # 1 kilobyte
+                file_name = url.split('/')[-1].split('?')[0]
+                result_full_path = os.path.join(self.dir, file_name)
+                with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
+                    with open(result_full_path, 'wb') as f:
+                        for data in r.iter_content(block_size):
+                            pbar.update(len(data))
+                            f.write(data)
+                self.succed[index] = file_name
+                self.ts_current += 1
+                return
+            except EnvironmentError as e:
+                print('\r\nError in writing file: {}'.format(e))
+                raise HlsDownloaderError
+            except:
+                retry -= 1
+        sys.stdout.write('[FAIL]')
+        self.failed.append((url, index))
+
 
     def _worker(self, ts_tuple):
         url = ts_tuple[0]

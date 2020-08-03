@@ -4,6 +4,7 @@ import re
 import dateutil.parser
 import operator
 import sys
+import tqdm
 
 import ffmpy
 import requests
@@ -156,6 +157,20 @@ class EchoVideo(object):
         os.rename(
             os.path.join(echo360_downloader.result_file_name),
             result_full_path)
+        return result_full_path
+
+    def _download_url_to_dir_request(self, session, url, output_dir, filename):
+        ext = url.split('.')[-1]
+
+        r = session.get(url, stream=True)
+        total_size = int(r.headers.get('content-length', 0))
+        block_size = 1024  # 1 kilobyte
+        result_full_path = os.path.join(output_dir, filename + ext)
+        with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
+            with open(result_full_path, 'wb') as f:
+                for data in r.iter_content(block_size):
+                    pbar.update(len(data))
+                    f.write(data)
         return result_full_path
 
     def get_all_parts(self):
