@@ -68,13 +68,14 @@ python echo360.py
 ### Script args
 ```
 >>> usage: echo360.py [-h] [--output OUTPUT_PATH]
-              [--after-date AFTER_DATEYYYY-MM-DD)]
-              [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
-              [--password PASSWORD] [--download-phantomjs-binary]
-              [--chrome] [--interactive] [--debug]
-              ECHO360_URL
+                  [--after-date AFTER_DATEYYYY-MM-DD)]
+                  [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
+                  [--password PASSWORD] [--setup-credentials]
+                  [--download-phantomjs-binary] [--chrome] [--firefox]
+                  [--interactive] [--manual] [--debug]
+                  ECHO360_URL
 
-Download lectures from Echo360 portal.
+Download lectures from portal.
 
 positional arguments:
   ECHO360_URL           Full URL of the echo360 course page, or only the UUID
@@ -111,8 +112,15 @@ optional arguments:
                         file for phantomjs (will override system bin)
   --chrome              Use Chrome Driver instead of phantomjs webdriver. You
                         must have chromedriver installed in your PATH.
+  --firefox             Use Firefox Driver instead of phantomjs webdriver. You
+                        must have geckodriver installed in your PATH.
   --interactive, -i     Interactively pick the lectures you want, instead of
                         download all (default) or based on dates .
+  --manual, -m          Only effective for 'echo360.org' host. When set, you
+                        will need to manually continue the script after
+                        logging into your institution's SSO; i.e. it will
+                        disable the automatic redirection which is the default
+                        behavior.
   --debug               Enable extensive logging.
 ```
 # Examples
@@ -247,6 +255,20 @@ You can setup any credentials need with manually logging into websites, by runni
 ./run.sh ECHO360_URL --setup-credential
 ```
 This will open up a chrome instance that allows you to log into your website as you normally do. Afterwards, simply type 'continue' into your shell and press enter to continue to proceeds with the rest of the script.
+
+### My credentials does not work (echo360.org)?
+
+For echo360.org, the default behaviour is it will always require you to setup-credentials, and the module will automatically detect login token and proceed the download process. For some institutions, this seems to be not sufficient (#29).
+
+You can disable such behaviour with
+```sh
+./run.sh ECHO360_ORG_URL --manual
+```
+for manual setup; and once you had logged in, type
+```sh
+continue
+```
+in your terminal to continue.
 
 ### How do I download only individual video(s)?
 
