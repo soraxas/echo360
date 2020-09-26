@@ -250,9 +250,9 @@ class EchoDownloader(object):
 
     def _get_filename(self, course, date, title):
         if course:
-            filename = "{} - {} - {}".format(course, date, title)
+            filename = "{} - {} - {}".format(course, date, title[:150])
         else:
-            filename = "{} - {}".format(date, title)
+            filename = "{} - {}".format(date, title[:150])
         # replace invalid character for files
         return self.regex_replace_invalid.sub('_', filename)
 
