@@ -397,7 +397,7 @@ def setup_logging(enable_degbug=False):
     )
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
+    console.setLevel(logging_level)
     console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     logging.getLogger("").addHandler(console)  # add handler to the root logger
 

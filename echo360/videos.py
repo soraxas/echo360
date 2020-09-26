@@ -246,8 +246,23 @@ class EchoCloudVideo(EchoVideo):
         for cookie in self._driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
-        if self.url.endswith('.m3u8'):
-            r = session.get(self.url)
+        urls = self.url
+        if(not isinstance(urls, list)):
+            urls = [self.url]
+
+        final_result = True
+        for counter, single_url in enumerate(urls):
+            print('- Downloading Video {}...'.format(counter + 1))
+            new_filename = filename + str(counter + 1)
+            result = self.download_single(session, single_url, output_dir, new_filename, pool_size)
+            final_result = final_result and result
+        
+        return final_result
+
+    
+    def download_single(self, session, single_url, output_dir, filename, pool_size):
+        if single_url.endswith('.m3u8'):
+            r = session.get(single_url)
             if not r.ok:
                 print("Error: Failed to get m3u8 info. Skipping this video")
                 return False
@@ -255,6 +270,7 @@ class EchoCloudVideo(EchoVideo):
             lines = [n for n in r.content.decode().split('\n')]
             m3u8_video = None
             m3u8_audio = None
+            print(lines)
             for i in range(1, len(lines)):
                 if lines[i].strip() == "":
                     continue
@@ -275,11 +291,11 @@ class EchoCloudVideo(EchoVideo):
 
             print("  > Downloading audio:")
             audio_file = self._download_url_to_dir(urljoin(
-                self.url, m3u8_audio), output_dir, filename + "_audio",
+                single_url, m3u8_audio), output_dir, filename + "_audio",
                 pool_size, convert_to_mp4=False)
             print("  > Downloading video:")
             video_file = self._download_url_to_dir(urljoin(
-                self.url, m3u8_video), output_dir, filename + "_video",
+                single_url, m3u8_video), output_dir, filename + "_video",
                 pool_size, convert_to_mp4=False)
             sys.stdout.write('  > Converting to mp4... ')
             sys.stdout.flush()
@@ -293,7 +309,7 @@ class EchoCloudVideo(EchoVideo):
         else:  # ends with mp4
             import tqdm
 
-            r = session.get(self.url, stream=True)
+            r = session.get(single_url, stream=True)
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024  # 1 kilobyte
             with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
@@ -361,7 +377,7 @@ class EchoCloudVideo(EchoVideo):
             # high or low definition.
             # Let's prioritise hd over sd, and 1 over 2 (the latter is arbitary)
             # which happens to be the natual order of letter anyway, so we can simply use sorted.
-            return sorted(urls)[0]
+            return sorted(urls)[:2]
 
         def from_json_m3u8():
             # seems like json would also contain that information so this method tries
@@ -441,7 +457,12 @@ class EchoCloudVideo(EchoVideo):
         # Since (from my experiment) the prefixes are always the same, we will
         # just use text sorting to get the higher number.
         m3u8urls = reversed(m3u8urls)
-        return next(m3u8urls)
+        first_url = next(m3u8urls)
+        try:
+            second_url = next(m3u8urls)
+            return [first_url, second_url]
+        except Exception as e:
+            return first_url
 
     def _extract_date(self, video_json):
         if self.is_multipart_video:
