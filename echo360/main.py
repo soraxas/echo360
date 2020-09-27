@@ -138,6 +138,17 @@ def handle_args():
                               redirection which is the default behavior.",
     )
     parser.add_argument(
+        "--two-feeds",
+        "-t",
+        action="store_true",
+        default=False,
+        dest="two_feeds",
+        help="Download first two video feeds. Since some university have multiple \
+                video feeds, with this option on the downloader will also try to download \
+                the second video, which could be the alternative feed. Might only work on \
+                some 'echo360.org' hosts.",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         default=False,
@@ -206,6 +217,7 @@ def handle_args():
         args["interactive"],
         args["enable_degbug"],
         args["manual"],
+        args["two_feeds"],
     )
 
 
@@ -224,6 +236,7 @@ def main():
         interactive_mode,
         enable_degbug,
         manual,
+        two_feeds
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -293,7 +306,7 @@ def main():
         course_uuid = re.search(
             "[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCloudCourse(course_uuid, course_hostname)
+        course = EchoCloudCourse(course_uuid, course_hostname, two_feeds)
     else:
         # import it here for monkey patching gevent, to fix the followings:
         # MonkeyPatchWarning: Monkey-patching ssl after ssl has already been

@@ -178,7 +178,7 @@ class EchoVideo(object):
 
 
 class EchoCloudVideos(EchoVideos):
-    def __init__(self, videos_json, driver, hostname):
+    def __init__(self, videos_json, driver, hostname, two_feeds):
         assert (videos_json is not None)
         self._driver = driver
         self._videos = []
@@ -186,7 +186,7 @@ class EchoCloudVideos(EchoVideos):
         update_course_retrieval_progress(0, total_videos_num)
 
         for i, video_json in enumerate(videos_json):
-            self._videos.append(EchoCloudVideo(video_json, self._driver, hostname))
+            self._videos.append(EchoCloudVideo(video_json, self._driver, hostname, two_feeds))
             update_course_retrieval_progress(i + 1, total_videos_num)
 
         self._videos.sort(key=operator.attrgetter("date"))
@@ -202,12 +202,13 @@ class EchoCloudVideo(EchoVideo):
     def video_url(self):
         return "{}/lesson/{}/classroom".format(self.hostname, self.video_id)
 
-    def __init__(self, video_json, driver, hostname):
+    def __init__(self, video_json, driver, hostname, two_feeds):
         self.hostname = hostname
         self._driver = driver
         self.video_json = video_json
         self.is_multipart_video = False
         self.sub_videos = [self]
+        self.download_two_feeds = two_feeds
         if 'lessons' in video_json:
             # IS a multi-part lesson.
             self.sub_videos = [EchoCloudSubVideo(sub_video_json, driver, hostname,
@@ -246,14 +247,20 @@ class EchoCloudVideo(EchoVideo):
         for cookie in self._driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
-        urls = self.url
-        if(not isinstance(urls, list)):
+        if(isinstance(self.url, list)):
+            urls = self.url
+        else:
             urls = [self.url]
+
+        if(not self.download_two_feeds):
+            # download_two_feeds defaults to False, slice to include only the first one
+            urls = urls[:1]
 
         final_result = True
         for counter, single_url in enumerate(urls):
-            print('- Downloading Video {}...'.format(counter + 1))
-            new_filename = filename + str(counter + 1)
+            if(self.download_two_feeds):
+                print('- Downloading video feed {}...'.format(counter + 1))
+            new_filename = (filename + str(counter + 1)) if self.download_two_feeds else filename
             result = self.download_single(session, single_url, output_dir, new_filename, pool_size)
             final_result = final_result and result
         
@@ -270,7 +277,7 @@ class EchoCloudVideo(EchoVideo):
             lines = [n for n in r.content.decode().split('\n')]
             m3u8_video = None
             m3u8_audio = None
-            print(lines)
+
             for i in range(1, len(lines)):
                 if lines[i].strip() == "":
                     continue
@@ -375,6 +382,8 @@ class EchoCloudVideo(EchoVideo):
             # in many cases, there would be urls in the format of http://xxx.{hd1,hd2,sd1,sd2}
             # I'm not sure what does the 1 and 2 in hd1,hd2 stands for, but hd and sd should means
             # high or low definition.
+            # Some university uses hd1 and hd2 for their alternative feeds, use flag `-t` 
+            # to download both feeds.
             # Let's prioritise hd over sd, and 1 over 2 (the latter is arbitary)
             # which happens to be the natual order of letter anyway, so we can simply use sorted.
             return sorted(urls)[:2]
@@ -456,13 +465,15 @@ class EchoCloudVideo(EchoVideo):
         # different quality?? We will set it to always prefer higher number.
         # Since (from my experiment) the prefixes are always the same, we will
         # just use text sorting to get the higher number.
+        # Some university have two different video feeds, use flag `-t` to
+        # download both feeds.
         m3u8urls = reversed(m3u8urls)
         first_url = next(m3u8urls)
         try:
             second_url = next(m3u8urls)
             return [first_url, second_url]
         except Exception as e:
-            return first_url
+            return [first_url]
 
     def _extract_date(self, video_json):
         if self.is_multipart_video:
