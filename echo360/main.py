@@ -120,6 +120,12 @@ def handle_args():
                               must have geckodriver installed in your PATH.",
     )
     parser.add_argument(
+        "--echo360cloud",
+        action="store_true",
+        default=False,
+        help="Treat the given hostname as echo360 cloud platform.",
+    )
+    parser.add_argument(
         "--interactive",
         "-i",
         action="store_true",
@@ -206,6 +212,7 @@ def handle_args():
         args["interactive"],
         args["enable_degbug"],
         args["manual"],
+        args["echo360cloud"]
     )
 
 
@@ -224,17 +231,19 @@ def main():
         interactive_mode,
         enable_degbug,
         manual,
+        usingEcho360Cloud,
     ) = handle_args()
 
     setup_logging(enable_degbug)
 
-    usingEcho360Cloud = False
-    if "echo360.org" in course_hostname:
+    if not usingEcho360Cloud and "echo360.org" in course_hostname:
         print("> Echo360 Cloud platform detected")
         print("> This implies setup_credential, and using web_driver")
         print(">> Please login with your SSO details and type continue when logged in.")
         print("-" * 65)
         usingEcho360Cloud = True
+        setup_credential = True
+    if usingEcho360Cloud:  # for manual --echo360cloud flag
         setup_credential = True
 
     def cmd_exists(x):
