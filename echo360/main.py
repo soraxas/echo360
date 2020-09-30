@@ -54,7 +54,6 @@ def handle_args():
     )
     parser.add_argument(
         "--after-date",
-        "-a",
         dest="after_date",
         help="Only download lectures newer than AFTER_DATE \
                              (inclusive). Note: this may be combined with \
@@ -63,7 +62,6 @@ def handle_args():
     )
     parser.add_argument(
         "--before-date",
-        "-b",
         dest="before_date",
         help="Only download lectures older than BEFORE_DATE \
                               (inclusive). Note: this may be combined with \
@@ -138,11 +136,11 @@ def handle_args():
                               redirection which is the default behavior.",
     )
     parser.add_argument(
-        "--two-feeds",
-        "-t",
+        "--alternative_feeds",
+        "-a",
         action="store_true",
         default=False,
-        dest="two_feeds",
+        dest="alternative_feeds",
         help="Download first two video feeds. Since some university have multiple \
                 video feeds, with this option on the downloader will also try to download \
                 the second video, which could be the alternative feed. Might only work on \
@@ -217,7 +215,7 @@ def handle_args():
         args["interactive"],
         args["enable_degbug"],
         args["manual"],
-        args["two_feeds"],
+        args["alternative_feeds"],
     )
 
 
@@ -236,7 +234,7 @@ def main():
         interactive_mode,
         enable_degbug,
         manual,
-        two_feeds
+        alternative_feeds
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -306,7 +304,7 @@ def main():
         course_uuid = re.search(
             "[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCloudCourse(course_uuid, course_hostname, two_feeds)
+        course = EchoCloudCourse(course_uuid, course_hostname, alternative_feeds)
     else:
         # import it here for monkey patching gevent, to fix the followings:
         # MonkeyPatchWarning: Monkey-patching ssl after ssl has already been

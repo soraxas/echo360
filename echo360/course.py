@@ -13,13 +13,13 @@ _LOGGER = logging.getLogger(__name__)
 
 class EchoCourse(object):
 
-    def __init__(self, uuid, hostname=None, two_feeds=False):
+    def __init__(self, uuid, hostname=None, alternative_feeds=False):
         self._course_id = None
         self._course_name = None
         self._uuid = uuid
         self._videos = None
         self._driver = None
-        self._two_feeds = two_feeds
+        self._alternative_feeds = alternative_feeds
         if hostname is None:
             self._hostname = "https://view.streaming.sydney.edu.au:8443"
         else:
@@ -128,7 +128,7 @@ class EchoCloudCourse(EchoCourse):
             try:
                 course_data_json = self._get_course_data()
                 videos_json = course_data_json["data"]
-                self._videos = EchoCloudVideos(videos_json, self._driver, self.hostname, self._two_feeds)
+                self._videos = EchoCloudVideos(videos_json, self._driver, self.hostname, self._alternative_feeds)
             # except KeyError as e:
             #     print("Unable to parse course videos from JSON (course_data)")
             #     raise e
