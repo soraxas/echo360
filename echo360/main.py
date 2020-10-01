@@ -54,7 +54,6 @@ def handle_args():
     )
     parser.add_argument(
         "--after-date",
-        "-a",
         dest="after_date",
         help="Only download lectures newer than AFTER_DATE \
                              (inclusive). Note: this may be combined with \
@@ -63,7 +62,6 @@ def handle_args():
     )
     parser.add_argument(
         "--before-date",
-        "-b",
         dest="before_date",
         help="Only download lectures older than BEFORE_DATE \
                               (inclusive). Note: this may be combined with \
@@ -144,6 +142,17 @@ def handle_args():
                               redirection which is the default behavior.",
     )
     parser.add_argument(
+        "--alternative_feeds",
+        "-a",
+        action="store_true",
+        default=False,
+        dest="alternative_feeds",
+        help="Download first two video feeds. Since some university have multiple \
+                video feeds, with this option on the downloader will also try to download \
+                the second video, which could be the alternative feed. Might only work on \
+                some 'echo360.org' hosts.",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         default=False,
@@ -212,6 +221,7 @@ def handle_args():
         args["interactive"],
         args["enable_degbug"],
         args["manual"],
+        args["alternative_feeds"],
         args["echo360cloud"]
     )
 
@@ -231,6 +241,7 @@ def main():
         interactive_mode,
         enable_degbug,
         manual,
+        alternative_feeds
         usingEcho360Cloud,
     ) = handle_args()
 
@@ -302,7 +313,7 @@ def main():
         course_uuid = re.search(
             "[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCloudCourse(course_uuid, course_hostname)
+        course = EchoCloudCourse(course_uuid, course_hostname, alternative_feeds)
     else:
         # import it here for monkey patching gevent, to fix the followings:
         # MonkeyPatchWarning: Monkey-patching ssl after ssl has already been
@@ -406,7 +417,7 @@ def setup_logging(enable_degbug=False):
     )
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
+    console.setLevel(logging_level)
     console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     logging.getLogger("").addHandler(console)  # add handler to the root logger
 

@@ -90,11 +90,11 @@ optional arguments:
                         Path to the desired output directory. The output
                         directory must exist. Otherwise the current directory
                         is used.
-  --after-date AFTER_DATE(YYYY-MM-DD), -a AFTER_DATE(YYYY-MM-DD)
+  --after-date AFTER_DATE(YYYY-MM-DD)
                         Only download lectures newer than AFTER_DATE
                         (inclusive). Note: this may be combined with --before-
                         date.
-  --before-date BEFORE_DATE(YYYY-MM-DD), -b BEFORE_DATE(YYYY-MM-DD)
+  --before-date BEFORE_DATE(YYYY-MM-DD)
                         Only download lectures older than BEFORE_DATE
                         (inclusive). Note: this may be combined with --after-
                         date
@@ -121,6 +121,12 @@ optional arguments:
                         logging into your institution's SSO; i.e. it will
                         disable the automatic redirection which is the default
                         behavior.
+  --alternative_feeds, -a
+                        Download first two video feeds. Since some university 
+                        have multiple video feeds, with this option on the 
+                        downloader will also try to download the second video, 
+                        which could be the alternative feed. Might only work 
+                        on some 'echo360.org' hosts.
   --debug               Enable extensive logging.
 ```
 # Examples
@@ -279,6 +285,10 @@ You are in luck! It is now possible to pick a subset of videos to download from 
 ...and it shall presents an interactive screen for you to pick each individual video(s) that you want to download, like the screenshot as shown below.
 
 <img src="/docs/images/pick_individual_videos_screenshot.png" width="650" height="auto" >
+
+### My lecture has two video feeds, how can I download both of them?
+
+You can add argument `--alternative_feeds` or simply `-a` to download both video feeds.
 
 ### Technical details
 

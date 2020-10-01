@@ -178,7 +178,7 @@ class EchoVideo(object):
 
 
 class EchoCloudVideos(EchoVideos):
-    def __init__(self, videos_json, driver, hostname):
+    def __init__(self, videos_json, driver, hostname, alternative_feeds):
         assert (videos_json is not None)
         self._driver = driver
         self._videos = []
@@ -186,7 +186,7 @@ class EchoCloudVideos(EchoVideos):
         update_course_retrieval_progress(0, total_videos_num)
 
         for i, video_json in enumerate(videos_json):
-            self._videos.append(EchoCloudVideo(video_json, self._driver, hostname))
+            self._videos.append(EchoCloudVideo(video_json, self._driver, hostname, alternative_feeds))
             update_course_retrieval_progress(i + 1, total_videos_num)
 
         self._videos.sort(key=operator.attrgetter("date"))
@@ -202,12 +202,13 @@ class EchoCloudVideo(EchoVideo):
     def video_url(self):
         return "{}/lesson/{}/classroom".format(self.hostname, self.video_id)
 
-    def __init__(self, video_json, driver, hostname):
+    def __init__(self, video_json, driver, hostname, alternative_feeds):
         self.hostname = hostname
         self._driver = driver
         self.video_json = video_json
         self.is_multipart_video = False
         self.sub_videos = [self]
+        self.download_alternative_feeds = alternative_feeds
         if 'lessons' in video_json:
             # IS a multi-part lesson.
             self.sub_videos = [EchoCloudSubVideo(sub_video_json, driver, hostname,
@@ -246,8 +247,28 @@ class EchoCloudVideo(EchoVideo):
         for cookie in self._driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
-        if self.url.endswith('.m3u8'):
-            r = session.get(self.url)
+        urls = self.url
+        if not isinstance(urls, list):
+            urls = [urls]
+
+        if(not self.download_alternative_feeds):
+            # download_alternative_feeds defaults to False, slice to include only the first one
+            urls = urls[:1]
+
+        final_result = True
+        for counter, single_url in enumerate(urls):
+            if(self.download_alternative_feeds):
+                print('- Downloading video feed {}...'.format(counter + 1))
+            new_filename = (filename + str(counter + 1)) if self.download_alternative_feeds else filename
+            result = self.download_single(session, single_url, output_dir, new_filename, pool_size)
+            final_result = final_result and result
+        
+        return final_result
+
+    
+    def download_single(self, session, single_url, output_dir, filename, pool_size):
+        if single_url.endswith('.m3u8'):
+            r = session.get(single_url)
             if not r.ok:
                 print("Error: Failed to get m3u8 info. Skipping this video")
                 return False
@@ -255,6 +276,7 @@ class EchoCloudVideo(EchoVideo):
             lines = [n for n in r.content.decode().split('\n')]
             m3u8_video = None
             m3u8_audio = None
+
             for i in range(1, len(lines)):
                 if lines[i].strip() == "":
                     continue
@@ -275,11 +297,11 @@ class EchoCloudVideo(EchoVideo):
 
             print("  > Downloading audio:")
             audio_file = self._download_url_to_dir(urljoin(
-                self.url, m3u8_audio), output_dir, filename + "_audio",
+                single_url, m3u8_audio), output_dir, filename + "_audio",
                 pool_size, convert_to_mp4=False)
             print("  > Downloading video:")
             video_file = self._download_url_to_dir(urljoin(
-                self.url, m3u8_video), output_dir, filename + "_video",
+                single_url, m3u8_video), output_dir, filename + "_video",
                 pool_size, convert_to_mp4=False)
             sys.stdout.write('  > Converting to mp4... ')
             sys.stdout.flush()
@@ -293,7 +315,7 @@ class EchoCloudVideo(EchoVideo):
         else:  # ends with mp4
             import tqdm
 
-            r = session.get(self.url, stream=True)
+            r = session.get(single_url, stream=True)
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024  # 1 kilobyte
             with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
@@ -359,9 +381,11 @@ class EchoCloudVideo(EchoVideo):
             # in many cases, there would be urls in the format of http://xxx.{hd1,hd2,sd1,sd2}
             # I'm not sure what does the 1 and 2 in hd1,hd2 stands for, but hd and sd should means
             # high or low definition.
+            # Some university uses hd1 and hd2 for their alternative feeds, use flag `-a` 
+            # to download both feeds.
             # Let's prioritise hd over sd, and 1 over 2 (the latter is arbitary)
             # which happens to be the natual order of letter anyway, so we can simply use sorted.
-            return sorted(urls)[0]
+            return sorted(urls)[:2]
 
         def from_json_m3u8():
             # seems like json would also contain that information so this method tries
@@ -440,8 +464,10 @@ class EchoCloudVideo(EchoVideo):
         # different quality?? We will set it to always prefer higher number.
         # Since (from my experiment) the prefixes are always the same, we will
         # just use text sorting to get the higher number.
-        m3u8urls = reversed(m3u8urls)
-        return next(m3u8urls)
+        # Some university have two different video feeds, use flag `-a` to
+        # download both feeds.
+        m3u8urls = list(reversed(m3u8urls))
+        return m3u8urls[:2]
 
     def _extract_date(self, video_json):
         if self.is_multipart_video:
