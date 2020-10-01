@@ -241,7 +241,7 @@ def main():
         interactive_mode,
         enable_degbug,
         manual,
-        alternative_feeds
+        alternative_feeds,
         usingEcho360Cloud,
     ) = handle_args()
 
