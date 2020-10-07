@@ -178,7 +178,7 @@ class EchoVideo(object):
 
 
 class EchoCloudVideos(EchoVideos):
-    def __init__(self, videos_json, driver, hostname, alternative_feeds):
+    def __init__(self, videos_json, driver, hostname, alternative_feeds, skip_video_on_error=True):
         assert (videos_json is not None)
         self._driver = driver
         self._videos = []
@@ -186,7 +186,11 @@ class EchoCloudVideos(EchoVideos):
         update_course_retrieval_progress(0, total_videos_num)
 
         for i, video_json in enumerate(videos_json):
-            self._videos.append(EchoCloudVideo(video_json, self._driver, hostname, alternative_feeds))
+            try:
+                self._videos.append(EchoCloudVideo(video_json, self._driver, hostname, alternative_feeds))
+            except Exception:
+                if not skip_video_on_error:
+                    raise
             update_course_retrieval_progress(i + 1, total_videos_num)
 
         self._videos.sort(key=operator.attrgetter("date"))
