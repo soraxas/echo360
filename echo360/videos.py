@@ -216,7 +216,8 @@ class EchoCloudVideo(EchoVideo):
         if 'lessons' in video_json:
             # IS a multi-part lesson.
             self.sub_videos = [EchoCloudSubVideo(sub_video_json, driver, hostname,
-                                                 group_name=video_json["groupInfo"]["name"])
+                                                 group_name=video_json["groupInfo"]["name"],
+                                                 alternative_feeds=alternative_feeds)
                                for sub_video_json in video_json['lessons']]
             self.is_multipart_video = True
             # THIS OBJECT SHOULD NOT BE USED ANYMORE as no further
@@ -493,8 +494,8 @@ class EchoCloudVideo(EchoVideo):
 class EchoCloudSubVideo(EchoCloudVideo):
     """Some video in echo360 cloud is multi-part and this represents it."""
 
-    def __init__(self, video_json, driver, hostname, group_name):
-        super(EchoCloudSubVideo, self).__init__(video_json, driver, hostname)
+    def __init__(self, video_json, driver, hostname, group_name, alternative_feeds):
+        super(EchoCloudSubVideo, self).__init__(video_json, driver, hostname, alternative_feeds)
         self.group_name = group_name
 
     @property
