@@ -1,0 +1,43 @@
+name: Package Application with Pyinstaller
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    # necessary because pyinstaller does not work when entry has the same
+    # name as the python package
+    - name: setup entrypoint for pyinstaller
+      run: mv echo360.py entrypoint.py
+    - name: Package Application
+      uses: JackMcKew/pyinstaller-action-linux@main
+      with:
+        path: .
+    - uses: actions/upload-artifact@v2
+      with:
+        #name: name-of-artifact
+        path: dist/linux/echo360
+
+  build_window:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    # necessary because pyinstaller does not work when entry has the same
+    # name as the python package
+    - name: setup entrypoint for pyinstaller
+      run: mv echo360.py entrypoint.py
+    - name: Package Application
+      uses: JackMcKew/pyinstaller-action-windows@main
+      with:
+        path: .
+    - uses: actions/upload-artifact@v2
+      with:
+        #name: name-of-artifact
+        path: dist/windows/echo360.exe
