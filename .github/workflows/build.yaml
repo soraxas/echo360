@@ -11,18 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      
     # necessary because pyinstaller does not work when entry has the same
     # name as the python package
     - name: setup entrypoint for pyinstaller
       run: mv echo360.py entrypoint.py
-    - name: Package Application
-      uses: JackMcKew/pyinstaller-action-linux@main
-      with:
-        path: .
+    # - name: Package Application
+    #   uses: JackMcKew/pyinstaller-action-linux@main
+    #   with:
+    #     path: .
+
+    # we are directly executing commands because GH action pyinstaller (somehow)
+    # doesn't have _curse (import problem)
+    - name: PyInstaller
+      run: pip install -r requirements.txt && pip install pyinstaller && python -m PyInstaller echo360.spec
     - uses: actions/upload-artifact@v2
       with:
-        #name: name-of-artifact
-        path: dist/linux/echo360
+        name: echo360-linux
+        path: dist/echo360
+        #path: dist/linux/echo360
 
   build_window:
     runs-on: ubuntu-latest
@@ -33,11 +40,13 @@ jobs:
     # name as the python package
     - name: setup entrypoint for pyinstaller
       run: mv echo360.py entrypoint.py
+    - name: add window-curse to window build
+      run: echo windows-curses >> requirements.txt
     - name: Package Application
       uses: JackMcKew/pyinstaller-action-windows@main
       with:
         path: .
     - uses: actions/upload-artifact@v2
       with:
-        #name: name-of-artifact
+        name: echo360-window
         path: dist/windows/echo360.exe
