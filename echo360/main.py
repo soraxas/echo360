@@ -132,16 +132,6 @@ def handle_args():
                               (default) or based on dates .",
     )
     parser.add_argument(
-        "--manual",
-        "-m",
-        action="store_true",
-        default=False,
-        help="Only effective for 'echo360.org' host. When set, you will need to \
-                              manually continue the script after logging into your \
-                              institution's SSO; i.e. it will disable the automatic \
-                              redirection which is the default behavior.",
-    )
-    parser.add_argument(
         "--alternative_feeds",
         "-a",
         action="store_true",
@@ -158,6 +148,23 @@ def handle_args():
         default=False,
         dest="enable_degbug",
         help="Enable extensive logging.",
+    )
+
+    redirection_option = parser.add_mutually_exclusive_group(required=False)
+    redirection_option.add_argument(
+        "--auto",
+        action="store_true",
+        help="Only effective for 'echo360.org' host. When set, this script will attempts to \
+                              automatically redirects after you had logged into your \
+                              institution's SSO.",
+    )
+    redirection_option.add_argument(
+        "--manual",
+        "-m",
+        action="store_true",
+        help="[Deprecated] Only effective for 'echo360.org' host. When set, the script requires user to \
+                              manually continue the script within the terminal. This is the \
+                              default behaviour and exists only for backward compatibility reason.",
     )
 
     args = vars(parser.parse_args())
@@ -220,7 +227,7 @@ def handle_args():
         webdriver_to_use,
         args["interactive"],
         args["enable_degbug"],
-        args["manual"],
+        not args["auto"],
         args["alternative_feeds"],
         args["echo360cloud"]
     )
