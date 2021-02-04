@@ -77,7 +77,8 @@ python echo360.py
                   [--before-date BEFORE_DATE(YYYY-MM-DD] [--unikey UNIKEY]
                   [--password PASSWORD] [--setup-credentials]
                   [--download-phantomjs-binary] [--chrome] [--firefox]
-                  [--interactive] [--manual] [--debug]
+                  [--echo360cloud] [--interactive] [--alternative_feeds]
+                  [--debug] [--auto | --manual]
                   ECHO360_URL
 
 Download lectures from portal.
@@ -121,18 +122,21 @@ optional arguments:
                         must have geckodriver installed in your PATH.
   --interactive, -i     Interactively pick the lectures you want, instead of
                         download all (default) or based on dates .
-  --manual, -m          Only effective for 'echo360.org' host. When set, you
-                        will need to manually continue the script after
-                        logging into your institution's SSO; i.e. it will
-                        disable the automatic redirection which is the default
-                        behavior.
   --alternative_feeds, -a
-                        Download first two video feeds. Since some university 
-                        have multiple video feeds, with this option on the 
-                        downloader will also try to download the second video, 
-                        which could be the alternative feed. Might only work 
-                        on some 'echo360.org' hosts.
+                        Download first two video feeds. Since some university
+                        have multiple video feeds, with this option on the
+                        downloader will also try to download the second
+                        video, which could be the alternative feed. Might
+                        only work on some 'echo360.org' hosts.
   --debug               Enable extensive logging.
+  --auto                Only effective for 'echo360.org' host. When set, this
+                        script will attempts to automatically redirects after
+                        you had logged into your institution's SSO.
+  --manual, -m          [Deprecated] Only effective for 'echo360.org' host.
+                        When set, the script requires user to manually
+                        continue the script within the terminal. This is the
+                        default behaviour and exists only for backward
+                        compatibility reason.
 ```
 # Examples
 
