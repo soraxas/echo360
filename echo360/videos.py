@@ -128,7 +128,7 @@ class EchoVideo(object):
             return date.strftime("%Y-%m-%d")
         except Exception:
             return "1970-01-01"
-    
+
     def _extract_date(self, video_json):
         return video_json["startTime"]
 
@@ -246,7 +246,7 @@ class EchoCloudVideo(EchoVideo):
         print('Downloading "{}"'.format(filename))
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        
+
         session = requests.Session()
             # load cookies
         for cookie in self._driver.get_cookies():
@@ -267,10 +267,10 @@ class EchoCloudVideo(EchoVideo):
             new_filename = (filename + str(counter + 1)) if self.download_alternative_feeds else filename
             result = self.download_single(session, single_url, output_dir, new_filename, pool_size)
             final_result = final_result and result
-        
+
         return final_result
 
-    
+
     def download_single(self, session, single_url, output_dir, filename, pool_size):
         if single_url.endswith('.m3u8'):
             r = session.get(single_url)
@@ -282,6 +282,7 @@ class EchoCloudVideo(EchoVideo):
             m3u8_video = None
             m3u8_audio = None
 
+            _LOGGER.debug("Searching for m3u8 with content {}".format(lines))
             for i in range(1, len(lines)):
                 if lines[i].strip() == "":
                     continue
@@ -292,29 +293,42 @@ class EchoCloudVideo(EchoVideo):
                         # there probably will be multiple video stream but the last one is
                         # most likely the highest quality :) ..... assumption assumption
                         m3u8_video = lines[i]
+                        _LOGGER.debug("Found video with line {} with prev line {}".format(
+                            lines[i], lines[i-1]))
+                        continue
                     else:
                         m3u8_audio = lines[i]
-            if m3u8_video is None or m3u8_audio is None:
-                print("ERROR: Failed to find audio/video m3u8... skipping this one")
+                        _LOGGER.debug("Found audio with line {} with prev line {}".format(
+                            lines[i], lines[i-1]))
+                        continue
+            if m3u8_video is None:  # even if audio is None it's okay, maybe audio is include with video
+                print("ERROR: Failed to find video m3u8... skipping this one")
                 return False
             # NOW we can finally start downloading!
             from .hls_downloader import urljoin
 
-            print("  > Downloading audio:")
-            audio_file = self._download_url_to_dir(urljoin(
-                single_url, m3u8_audio), output_dir, filename + "_audio",
-                pool_size, convert_to_mp4=False)
+            audio_file = None
+            if m3u8_audio is not None:
+                print("  > Downloading audio:")
+                audio_file = self._download_url_to_dir(urljoin(
+                    single_url, m3u8_audio), output_dir, filename + "_audio",
+                    pool_size, convert_to_mp4=False)
             print("  > Downloading video:")
             video_file = self._download_url_to_dir(urljoin(
                 single_url, m3u8_video), output_dir, filename + "_video",
                 pool_size, convert_to_mp4=False)
             sys.stdout.write('  > Converting to mp4... ')
             sys.stdout.flush()
-            self.combine_audio_video(audio_file, video_file,
-                                     os.path.join(output_dir, filename + ".mp4"))
-            # remove left-over plain audio/video files.
-            os.remove(audio_file)
-            os.remove(video_file)
+            if audio_file is not None:
+                # combine audio file with video
+                self.combine_audio_video(audio_file, video_file,
+                                        os.path.join(output_dir, filename + ".mp4"))
+                # remove left-over plain audio/video files.
+                os.remove(audio_file)
+                os.remove(video_file)
+            else:
+                # simply rename the video file
+                os.rename(video_file, final_file)
 
 
         else:  # ends with mp4
@@ -377,7 +391,7 @@ class EchoCloudVideo(EchoVideo):
                             Possibly internet problem?'.format(max_attempts))
                         raise
                     stale_attempt += 1
-                    
+
         def brute_force_get_mp4_url():
             """Forcefully try to find all .mp4 url in the page source"""
             urls = brute_force_get_url(suffix='mp4')
@@ -386,7 +400,7 @@ class EchoCloudVideo(EchoVideo):
             # in many cases, there would be urls in the format of http://xxx.{hd1,hd2,sd1,sd2}
             # I'm not sure what does the 1 and 2 in hd1,hd2 stands for, but hd and sd should means
             # high or low definition.
-            # Some university uses hd1 and hd2 for their alternative feeds, use flag `-a` 
+            # Some university uses hd1 and hd2 for their alternative feeds, use flag `-a`
             # to download both feeds.
             # Let's prioritise hd over sd, and 1 over 2 (the latter is arbitary)
             # which happens to be the natual order of letter anyway, so we can simply use sorted.
