@@ -17,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException
 
 from .hls_downloader import Downloader
+from .naive_m3u8_parser import NaiveM3U8Parser
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -270,7 +271,6 @@ class EchoCloudVideo(EchoVideo):
 
         return final_result
 
-
     def download_single(self, session, single_url, output_dir, filename, pool_size):
         if single_url.endswith('.m3u8'):
             r = session.get(single_url)
@@ -283,24 +283,17 @@ class EchoCloudVideo(EchoVideo):
             m3u8_audio = None
 
             _LOGGER.debug("Searching for m3u8 with content {}".format(lines))
-            for i in range(1, len(lines)):
-                if lines[i].strip() == "":
-                    continue
-                if not lines[i].startswith('#'):
-                    # check what content is this for by previous' line
-                    # ALL THESE CHECKS ARE HAND-CRAFTED AND MIGHT BREAKS EASILY
-                    if "RESOLUTION" in lines[i-1]:
-                        # there probably will be multiple video stream but the last one is
-                        # most likely the highest quality :) ..... assumption assumption
-                        m3u8_video = lines[i]
-                        _LOGGER.debug("Found video with line {} with prev line {}".format(
-                            lines[i], lines[i-1]))
-                        continue
-                    else:
-                        m3u8_audio = lines[i]
-                        _LOGGER.debug("Found audio with line {} with prev line {}".format(
-                            lines[i], lines[i-1]))
-                        continue
+
+            m3u8_parser = NaiveM3U8Parser(lines)
+            try:
+                m3u8_parser.parse()
+            except Exception as e:
+                _LOGGER.debug("Exception occurred while parsing m3u8: {}".format(e))
+                print("Failed to parse m3u8. Skipping...")
+                return False
+
+            m3u8_video, m3u8_audio = m3u8_parser.get_video_and_audio()
+
             if m3u8_video is None:  # even if audio is None it's okay, maybe audio is include with video
                 print("ERROR: Failed to find video m3u8... skipping this one")
                 return False
