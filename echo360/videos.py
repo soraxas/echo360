@@ -319,16 +319,17 @@ class EchoCloudVideo(EchoVideo):
                 pool_size, convert_to_mp4=False)
             sys.stdout.write('  > Converting to mp4... ')
             sys.stdout.flush()
+
+            # combine audio file with video (separate audio might not exists.)
+            self.combine_audio_video(
+                audio_file=audio_file,
+                video_file=video_file,
+                final_file=os.path.join(output_dir, filename + ".mp4")
+                )
+            # remove left-over plain audio/video files.
             if audio_file is not None:
-                # combine audio file with video
-                self.combine_audio_video(audio_file, video_file,
-                                        os.path.join(output_dir, filename + ".mp4"))
-                # remove left-over plain audio/video files.
                 os.remove(audio_file)
-                os.remove(video_file)
-            else:
-                # simply rename the video file
-                os.rename(video_file, final_file)
+            os.remove(video_file)
 
 
         else:  # ends with mp4
@@ -353,9 +354,13 @@ class EchoCloudVideo(EchoVideo):
     def combine_audio_video(audio_file, video_file, final_file):
         if os.path.exists(final_file):
             os.remove(final_file)
+        _inputs = {}
+        _inputs[video_file] = None
+        if audio_file is not None:
+            _inputs[audio_file] = None
         ff = ffmpy.FFmpeg(
             global_options='-loglevel panic',
-            inputs={video_file: None, audio_file: None},
+            inputs=_inputs,
             outputs={final_file: ['-c:v', 'copy', '-c:a', 'ac3']}
         )
         ff.run()
