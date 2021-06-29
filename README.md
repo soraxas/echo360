@@ -15,7 +15,7 @@ See it in action:
     <img width="700" height="auto" src="docs/images/demo.gif" alt="echo360 demo" />
 </p>
 
-**NEWS:** It now works with `echo360.org` platform as well. Special thanks to [*@cloudrac3r*](https://github.com/cloudrac3r) and *Emma* for their kind offering of providing sources and helped debugging it. Read [FAQ](#echo360-cloud) for details.
+**NEWS:** It now works with `echo360.net` platform as well. Special thanks to [*@cloudrac3r*](https://github.com/cloudrac3r) and *Emma* for their kind offering of providing sources and helped debugging it. Read [FAQ](#echo360-cloud) for details.
 
 # Getting Started
 
@@ -127,12 +127,12 @@ optional arguments:
                         have multiple video feeds, with this option on the
                         downloader will also try to download the second
                         video, which could be the alternative feed. Might
-                        only work on some 'echo360.org' hosts.
+                        only work on some 'echo360.net' hosts.
   --debug               Enable extensive logging.
-  --auto                Only effective for 'echo360.org' host. When set, this
+  --auto                Only effective for 'echo360.net' host. When set, this
                         script will attempts to automatically redirects after
                         you had logged into your institution's SSO.
-  --manual, -m          [Deprecated] Only effective for 'echo360.org' host.
+  --manual, -m          [Deprecated] Only effective for 'echo360.net' host.
                         When set, the script requires user to manually
                         continue the script within the terminal. This is the
                         default behaviour and exists only for backward
@@ -203,14 +203,14 @@ https://$(hostname)/ess/portal/section/$(UUID)
 ```
 or
 ```shell
-https://echo360.org[.xx]/
+https://echo360.net[.xx]/
 ```
 
 ... then it should be supported.
 
 The variables `$(hostname)` and `$(UUID)` are what differentiate different University's echo360 system. If there is no credentials needed (ie no need to login before accessing the page), then 90% of the time it should works. If login is needed, some extra work might need to be put in before it works for your university. If that is the case, create an issue to let me know.
 
-As for `echo360.org`, see [this](#echo360-cloud).
+As for `echo360.net`, see [this](#echo360-cloud).
 
 ### How do I retrieve the Course URL for a course?
 
@@ -232,7 +232,7 @@ The UUID (Unified Unique IDentifier) is the last element of the URL. So in the a
 
 ### echo360 cloud
 
-Echo360 cloud refers to websites in the format of `https://echo360.org[.xx]`. This module now officially support this platform.
+Echo360 cloud refers to websites in the format of `https://echo360.net[.xx]`. This module now officially support this platform.
 
 <p align="center">
 <img height="auto" width="700" src="docs/images/echo360cloud_home.png" alt="echo360 cloud course main page" />
@@ -242,7 +242,7 @@ This method requires you to setup SSO credentials, therefore, it needs to open u
 
 To download videos, run:
 ```shell
-./run.sh https://echo360.org[.xx]/section/$(UUID)/home
+./run.sh https://echo360.net[.xx]/section/$(UUID)/home
 ```
 where `[.xx]` is an optional country flag specific to your echo360 platform and `$(UUID)` is the unique identifier for your course. This should the url that you can retrieve from your course's *main page* like the following.
 
@@ -250,7 +250,7 @@ where `[.xx]` is an optional country flag specific to your echo360 platform and 
 
 Note that this implies `setup-credential` option and will use chrome-webdriver by default. If you don't have chrome or prefer to use firefox, run it with the ` --firefox` flag like so:
 ```shell
-./run.sh https://echo360.org[.xx]/section/$(UUID)/home --firefox
+./run.sh https://echo360.net[.xx]/section/$(UUID)/home --firefox
 ```
 
 After running the command, it will opens up a browser instance, most likely with a login page. You should then login with your student's credentials like what you would normally do. After you have successfully logged in, the module should automatically redirects you and continues. If the script hangs (e.g. failed to recognises that you have logged in), feel free to let me know.
@@ -271,13 +271,13 @@ You can setup any credentials need with manually logging into websites, by runni
 ```
 This will open up a chrome instance that allows you to log into your website as you normally do. Afterwards, simply type 'continue' into your shell and press enter to continue to proceeds with the rest of the script.
 
-### My credentials does not work (echo360.org)?
+### My credentials does not work (echo360.net)?
 
-For echo360.org, the default behaviour is it will always require you to setup-credentials, and the module will automatically detect login token and proceed the download process. For some institutions, this seems to be not sufficient (#29).
+For echo360.net, the default behaviour is it will always require you to setup-credentials, and the module will automatically detect login token and proceed the download process. For some institutions, this seems to be not sufficient (#29).
 
 You can disable such behaviour with
 ```sh
-./run.sh ECHO360_ORG_URL --manual
+./run.sh ECHO360_NET_URL --manual
 ```
 for manual setup; and once you had logged in, type
 ```sh

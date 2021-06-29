@@ -179,7 +179,7 @@ def main():
     setup_logging(enable_degbug)
 
     usingEcho360Cloud = False
-    if "echo360.org" in course_hostname:
+    if "echo360.net" in course_hostname:
         print("> Echo360 Cloud platform detected")
         print("> This implies setup_credential, and using web_driver")
         print(">> Please login with your SSO details and type continue when logged in.")
