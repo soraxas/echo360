@@ -205,6 +205,10 @@ or
 ```shell
 https://echo360.org[.xx]/
 ```
+or with a dot net variant
+```shell
+https://echo360.net[.xx]/
+```
 
 ... then it should be supported.
 
