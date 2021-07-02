@@ -140,7 +140,7 @@ def handle_args():
         help="Download first two video feeds. Since some university have multiple \
                 video feeds, with this option on the downloader will also try to download \
                 the second video, which could be the alternative feed. Might only work on \
-                some 'echo360.net' hosts.",
+                some 'echo360.org' hosts.",
     )
     parser.add_argument(
         "--debug",
@@ -154,7 +154,7 @@ def handle_args():
     redirection_option.add_argument(
         "--auto",
         action="store_true",
-        help="Only effective for 'echo360.net' host. When set, this script will attempts to \
+        help="Only effective for 'echo360.org' host. When set, this script will attempts to \
                               automatically redirects after you had logged into your \
                               institution's SSO.",
     )
@@ -162,7 +162,7 @@ def handle_args():
         "--manual",
         "-m",
         action="store_true",
-        help="[Deprecated] Only effective for 'echo360.net' host. When set, the script requires user to \
+        help="[Deprecated] Only effective for 'echo360.org' host. When set, the script requires user to \
                               manually continue the script within the terminal. This is the \
                               default behaviour and exists only for backward compatibility reason.",
     )
@@ -254,7 +254,7 @@ def main():
 
     setup_logging(enable_degbug)
 
-    if not usingEcho360Cloud and "echo360.net" in course_hostname:
+    if not usingEcho360Cloud and "echo360.org" in course_hostname:
         print("> Echo360 Cloud platform detected")
         print("> This implies setup_credential, and using web_driver")
         print(">> Please login with your SSO details and type continue when logged in.")

@@ -414,7 +414,7 @@ class EchoCloudVideo(EchoVideo):
             manifests = self.video_json['lesson']['video']['media']['media']['versions'][0]['manifests']
             m3u8urls = [m['uri'] for m in manifests]
             # somehow the hostname for these urls are from amazon (probably offloading
-            # to them.) We need to set the host back to echo360.net
+            # to them.) We need to set the host back to echo360.org
             try:
                 # python3
                 from urllib.parse import urlparse
