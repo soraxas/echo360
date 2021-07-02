@@ -254,7 +254,7 @@ def main():
 
     setup_logging(enable_degbug)
 
-    if not usingEcho360Cloud and "echo360.org" in course_hostname:
+    if not usingEcho360Cloud and any(token in course_hostname for token in ["echo360.org", "echo360.net"]):
         print("> Echo360 Cloud platform detected")
         print("> This implies setup_credential, and using web_driver")
         print(">> Please login with your SSO details and type continue when logged in.")
