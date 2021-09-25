@@ -246,7 +246,7 @@ This method requires you to setup SSO credentials, therefore, it needs to open u
 
 To download videos, run:
 ```shell
-./run.sh https://echo360.org[.xx]/section/$(UUID)/home
+./run.sh https://echo360.<org|net>[.xx]/section/$(UUID)/home
 ```
 where `[.xx]` is an optional country flag specific to your echo360 platform and `$(UUID)` is the unique identifier for your course. This should the url that you can retrieve from your course's *main page* like the following.
 
@@ -254,7 +254,7 @@ where `[.xx]` is an optional country flag specific to your echo360 platform and 
 
 Note that this implies `setup-credential` option and will use chrome-webdriver by default. If you don't have chrome or prefer to use firefox, run it with the ` --firefox` flag like so:
 ```shell
-./run.sh https://echo360.org[.xx]/section/$(UUID)/home --firefox
+./run.sh https://echo360.<org|net>[.xx]/section/$(UUID)/home --firefox
 ```
 
 After running the command, it will opens up a browser instance, most likely with a login page. You should then login with your student's credentials like what you would normally do. After you have successfully logged in, the module should automatically redirects you and continues. If the script hangs (e.g. failed to recognises that you have logged in), feel free to let me know.
