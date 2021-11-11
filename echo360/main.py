@@ -4,6 +4,7 @@ import sys
 import re
 import logging
 import time
+import selenium
 from datetime import datetime
 
 try:
@@ -352,7 +353,13 @@ def main():
         run_setup_credential(
             downloader._driver, course_hostname, echo360_cloud=True, manual=manual
         )
-        downloader._driver.set_window_size(0, 0)
+        try:
+            downloader._driver.set_window_size(0, 0)
+            raise selenium.common.exceptions.InvalidArgumentException()
+        except selenium.common.exceptions.InvalidArgumentException:
+            # fallback to default size
+            # see https://github.com/soraxas/echo360/issues/50
+            downloader._driver.set_window_size(800, 600)
     downloader.download_all()
 
 
