@@ -230,7 +230,7 @@ def handle_args():
         args["enable_degbug"],
         not args["auto"],
         args["alternative_feeds"],
-        args["echo360cloud"]
+        args["echo360cloud"],
     )
 
 
@@ -255,7 +255,9 @@ def main():
 
     setup_logging(enable_degbug)
 
-    if not usingEcho360Cloud and any(token in course_hostname for token in ["echo360.org", "echo360.net"]):
+    if not usingEcho360Cloud and any(
+        token in course_hostname for token in ["echo360.org", "echo360.net"]
+    ):
         print("> Echo360 Cloud platform detected")
         print("> This implies setup_credential, and using web_driver")
         print(">> Please login with your SSO details and type continue when logged in.")
@@ -380,6 +382,7 @@ def run_setup_credential(webdriver, url, echo360_cloud=False, manual=False):
     webdriver.get(url)
     # for making it compatiable with Python 2 & 3
     from sys import version_info
+
     try:
         if echo360_cloud and not manual:
             print(
@@ -388,9 +391,7 @@ def run_setup_credential(webdriver, url, echo360_cloud=False, manual=False):
                 "please contact the author :)"
             )
         elif manual:
-            print(
-                " >> After you finished logging in, type 'continue' in the terminal."
-            )
+            print(" >> After you finished logging in, type 'continue' in the terminal.")
         while True:
             if echo360_cloud and not manual:
                 # for debugging:
@@ -434,4 +435,3 @@ def setup_logging(enable_degbug=False):
     console.setLevel(logging_level)
     console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     logging.getLogger("").addHandler(console)  # add handler to the root logger
-

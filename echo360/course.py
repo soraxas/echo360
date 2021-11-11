@@ -12,7 +12,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class EchoCourse(object):
-
     def __init__(self, uuid, hostname=None, alternative_feeds=False):
         self._course_id = None
         self._course_name = None
@@ -31,10 +30,14 @@ class EchoCourse(object):
         if not self._videos:
             try:
                 course_data_json = self._get_course_data()
-                videos_json = course_data_json["section"]["presentations"]["pageContents"]
+                videos_json = course_data_json["section"]["presentations"][
+                    "pageContents"
+                ]
                 self._videos = EchoVideos(videos_json, self._driver)
             except KeyError as e:
-                self._blow_up("Unable to parse course videos from JSON (course_data)", e)
+                self._blow_up(
+                    "Unable to parse course videos from JSON (course_data)", e
+                )
             except selenium.common.exceptions.NoSuchElementException as e:
                 self._blow_up("selenium cannot find given elements", e)
 
@@ -54,25 +57,31 @@ class EchoCourse(object):
 
     @property
     def video_url(self):
-        return "{}/ess/client/api/sections/{}/section-data.json?pageSize=100".format(self._hostname, self._uuid)
+        return "{}/ess/client/api/sections/{}/section-data.json?pageSize=100".format(
+            self._hostname, self._uuid
+        )
 
     @property
     def course_id(self):
         if self._course_id is None:
             try:
                 # driver = webdriver.PhantomJS() #TODO Redo this. Maybe use a singleton factory to request the lecho360 driver?s
-                self.driver.get(self.url) # Initialize to establish the 'anon' cookie that Echo360 sends.
+                self.driver.get(
+                    self.url
+                )  # Initialize to establish the 'anon' cookie that Echo360 sends.
                 self.driver.get(self.video_url)
                 course_data_json = self._get_course_data()
 
                 self._course_id = course_data_json["section"]["course"]["identifier"]
                 self._course_name = course_data_json["section"]["course"]["name"]
             except KeyError as e:
-                self._blow_up("Unable to parse course id (e.g. CS473) from JSON (course_data)", e)
+                self._blow_up(
+                    "Unable to parse course id (e.g. CS473) from JSON (course_data)", e
+                )
 
         if type(self._course_id) != str:
             # it's type unicode for python2
-            return self._course_id.encode('utf-8')
+            return self._course_id.encode("utf-8")
         return self._course_id
 
     @property
@@ -82,7 +91,7 @@ class EchoCourse(object):
             self.course_id
         if type(self._course_name) != str:
             # it's type unicode for python2
-            return self._course_name.encode('utf-8')
+            return self._course_name.encode("utf-8")
         return self._course_name
 
     @property
@@ -98,9 +107,11 @@ class EchoCourse(object):
     def _get_course_data(self):
         try:
             self.driver.get(self.video_url)
-            _LOGGER.debug("Dumping course page at %s: %s",
-                            self.video_url,
-                            self._driver.page_source)
+            _LOGGER.debug(
+                "Dumping course page at %s: %s",
+                self.video_url,
+                self._driver.page_source,
+            )
             json_str = self.driver.find_element_by_tag_name("pre").text
         except ValueError as e:
             raise Exception("Unable to retrieve JSON (course_data) from url", e)
@@ -117,7 +128,6 @@ class EchoCourse(object):
 
 
 class EchoCloudCourse(EchoCourse):
-
     def __init__(self, *args, **kwargs):
         super(EchoCloudCourse, self).__init__(*args, **kwargs)
 
@@ -128,7 +138,9 @@ class EchoCloudCourse(EchoCourse):
             try:
                 course_data_json = self._get_course_data()
                 videos_json = course_data_json["data"]
-                self._videos = EchoCloudVideos(videos_json, self._driver, self.hostname, self._alternative_feeds)
+                self._videos = EchoCloudVideos(
+                    videos_json, self._driver, self.hostname, self._alternative_feeds
+                )
             # except KeyError as e:
             #     print("Unable to parse course videos from JSON (course_data)")
             #     raise e
@@ -165,9 +177,9 @@ class EchoCloudCourse(EchoCourse):
         if self._course_name is None:
             # try each available video as some video might be special has contains
             # no information about the course.
-            for v in self.course_data['data']:
+            for v in self.course_data["data"]:
                 try:
-                    self._course_name = v['lesson']['video']['published']['courseName']
+                    self._course_name = v["lesson"]["video"]["published"]["courseName"]
                     break
                 except KeyError:
                     pass
@@ -183,9 +195,11 @@ class EchoCloudCourse(EchoCourse):
     def _get_course_data(self):
         try:
             self.driver.get(self.video_url)
-            _LOGGER.debug("Dumping course page at %s: %s",
-                          self.video_url,
-                          self._driver.page_source)
+            _LOGGER.debug(
+                "Dumping course page at %s: %s",
+                self.video_url,
+                self._driver.page_source,
+            )
             # use requests to retrieve data
             session = requests.Session()
             # load cookies

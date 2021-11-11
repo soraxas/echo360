@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def update_course_retrieval_progress(current, total):
-    prefix = '>> Retrieving echo360 Course Info... '
+    prefix = ">> Retrieving echo360 Course Info... "
     status = "{}/{} videos".format(current, total)
     text = "\r{0} {1} ".format(prefix, status)
     sys.stdout.write(text)
@@ -32,7 +32,7 @@ def update_course_retrieval_progress(current, total):
 
 class EchoVideos(object):
     def __init__(self, videos_json, driver):
-        assert (videos_json is not None)
+        assert videos_json is not None
         self._driver = driver
         self._videos = []
         total_videos_num = len(videos_json)
@@ -63,20 +63,19 @@ class EchoVideo(object):
             video_url = str(video_url)  # cast back to string
 
             self._driver.get(video_url)
-            _LOGGER.debug("Dumping video page at %s: %s",
-                          video_url,
-                          self._driver.page_source)
+            _LOGGER.debug(
+                "Dumping video page at %s: %s", video_url, self._driver.page_source
+            )
 
             m3u8_url = self._loop_find_m3u8_url(video_url, waitsecond=30)
             _LOGGER.debug("Found the following urls %s", m3u8_url)
             self._url = m3u8_url
 
             self._date = self.get_date(video_json["startTime"])
-            self._title = video_json['title']
+            self._title = video_json["title"]
 
         except KeyError as e:
-            self._blow_up("Unable to parse video data from JSON (course_data)",
-                          e)
+            self._blow_up("Unable to parse video data from JSON (course_data)", e)
 
     def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
         stale_attempt = 1
@@ -86,23 +85,31 @@ class EchoVideo(object):
             try:
                 # wait for maximum second before timeout
                 WebDriverWait(self._driver, waitsecond).until(
-                    EC.presence_of_element_located((By.ID, "content-player")))
-                return self._driver.find_element_by_id(
-                    'content-player').find_element_by_tag_name(
-                        'video').get_attribute('src')
+                    EC.presence_of_element_located((By.ID, "content-player"))
+                )
+                return (
+                    self._driver.find_element_by_id("content-player")
+                    .find_element_by_tag_name("video")
+                    .get_attribute("src")
+                )
             except selenium.common.exceptions.TimeoutException:
                 if refresh_attempt >= max_attempts:
                     print(
-                        '\r\nERROR: Connection timeouted after {} second for {} attempts... \
-                          Possibly internet problem?'.format(
-                            waitsecond, max_attempts))
+                        "\r\nERROR: Connection timeouted after {} second for {} attempts... \
+                          Possibly internet problem?".format(
+                            waitsecond, max_attempts
+                        )
+                    )
                     raise
                 refresh_attempt += 1
             except StaleElementReferenceException:
                 if stale_attempt >= max_attempts:
                     print(
-                        '\r\nERROR: Elements are not stable to retrieve after {} attempts... \
-                        Possibly internet problem?'.format(max_attempts))
+                        "\r\nERROR: Elements are not stable to retrieve after {} attempts... \
+                        Possibly internet problem?".format(
+                            max_attempts
+                        )
+                    )
                     raise
                 stale_attempt += 1
 
@@ -118,7 +125,7 @@ class EchoVideo(object):
     def title(self):
         if type(self._title) != str:
             # it's type unicode for python2
-            return self._title.encode('utf-8')
+            return self._title.encode("utf-8")
         return self._title
 
     def get_date(self, video_json):
@@ -139,36 +146,36 @@ class EchoVideo(object):
         sys.exit(1)
 
     def download(self, output_dir, filename, pool_size=50):
-        print('')
-        print('-' * 60)
+        print("")
+        print("-" * 60)
         print('Downloading "{}"'.format(filename))
         self._download_url_to_dir(self.url, output_dir, filename, pool_size)
-        print('-' * 60)
+        print("-" * 60)
         return True
 
-    def _download_url_to_dir(self, url, output_dir, filename, pool_size,
-                             convert_to_mp4=True):
-        echo360_downloader = Downloader(pool_size,
-                                        selenium_cookies=self._driver.get_cookies())
+    def _download_url_to_dir(
+        self, url, output_dir, filename, pool_size, convert_to_mp4=True
+    ):
+        echo360_downloader = Downloader(
+            pool_size, selenium_cookies=self._driver.get_cookies()
+        )
         echo360_downloader.run(url, output_dir, convert_to_mp4=convert_to_mp4)
 
         # rename file
-        ext = echo360_downloader.result_file_name.split('.')[-1]
-        result_full_path = os.path.join(output_dir, '{0}.{1}'.format(filename, ext))
-        os.rename(
-            os.path.join(echo360_downloader.result_file_name),
-            result_full_path)
+        ext = echo360_downloader.result_file_name.split(".")[-1]
+        result_full_path = os.path.join(output_dir, "{0}.{1}".format(filename, ext))
+        os.rename(os.path.join(echo360_downloader.result_file_name), result_full_path)
         return result_full_path
 
     def _download_url_to_dir_request(self, session, url, output_dir, filename):
-        ext = url.split('.')[-1]
+        ext = url.split(".")[-1]
 
         r = session.get(url, stream=True)
-        total_size = int(r.headers.get('content-length', 0))
+        total_size = int(r.headers.get("content-length", 0))
         block_size = 1024  # 1 kilobyte
         result_full_path = os.path.join(output_dir, filename + ext)
-        with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
-            with open(result_full_path, 'wb') as f:
+        with tqdm.tqdm(total=total_size, unit="iB", unit_scale=True) as pbar:
+            with open(result_full_path, "wb") as f:
                 for data in r.iter_content(block_size):
                     pbar.update(len(data))
                     f.write(data)
@@ -179,8 +186,10 @@ class EchoVideo(object):
 
 
 class EchoCloudVideos(EchoVideos):
-    def __init__(self, videos_json, driver, hostname, alternative_feeds, skip_video_on_error=True):
-        assert (videos_json is not None)
+    def __init__(
+        self, videos_json, driver, hostname, alternative_feeds, skip_video_on_error=True
+    ):
+        assert videos_json is not None
         self._driver = driver
         self._videos = []
         total_videos_num = len(videos_json)
@@ -188,7 +197,11 @@ class EchoCloudVideos(EchoVideos):
 
         for i, video_json in enumerate(videos_json):
             try:
-                self._videos.append(EchoCloudVideo(video_json, self._driver, hostname, alternative_feeds))
+                self._videos.append(
+                    EchoCloudVideo(
+                        video_json, self._driver, hostname, alternative_feeds
+                    )
+                )
             except Exception:
                 if not skip_video_on_error:
                     raise
@@ -202,7 +215,6 @@ class EchoCloudVideos(EchoVideos):
 
 
 class EchoCloudVideo(EchoVideo):
-
     @property
     def video_url(self):
         return "{}/lesson/{}/classroom".format(self.hostname, self.video_id)
@@ -214,12 +226,18 @@ class EchoCloudVideo(EchoVideo):
         self.is_multipart_video = False
         self.sub_videos = [self]
         self.download_alternative_feeds = alternative_feeds
-        if 'lessons' in video_json:
+        if "lessons" in video_json:
             # IS a multi-part lesson.
-            self.sub_videos = [EchoCloudSubVideo(sub_video_json, driver, hostname,
-                                                 group_name=video_json["groupInfo"]["name"],
-                                                 alternative_feeds=alternative_feeds)
-                               for sub_video_json in video_json['lessons']]
+            self.sub_videos = [
+                EchoCloudSubVideo(
+                    sub_video_json,
+                    driver,
+                    hostname,
+                    group_name=video_json["groupInfo"]["name"],
+                    alternative_feeds=alternative_feeds,
+                )
+                for sub_video_json in video_json["lessons"]
+            ]
             self.is_multipart_video = True
             # THIS OBJECT SHOULD NOT BE USED ANYMORE as no further
             # processing will be proceeded.
@@ -230,26 +248,26 @@ class EchoCloudVideo(EchoVideo):
         self.video_id = str(video_id)  # cast back to string
 
         self._driver.get(self.video_url)
-        _LOGGER.debug("Dumping video page at %s: %s",
-                      self.video_url,
-                      self._driver.page_source)
+        _LOGGER.debug(
+            "Dumping video page at %s: %s", self.video_url, self._driver.page_source
+        )
 
         m3u8_url = self._loop_find_m3u8_url(self.video_url, waitsecond=30)
         _LOGGER.debug("Found the following urls %s", m3u8_url)
         self._url = m3u8_url
 
         self._date = self.get_date(video_json)
-        self._title = video_json['lesson']['lesson']['name']
+        self._title = video_json["lesson"]["lesson"]["name"]
 
     def download(self, output_dir, filename, pool_size=50):
-        print('')
-        print('-' * 60)
+        print("")
+        print("-" * 60)
         print('Downloading "{}"'.format(filename))
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         session = requests.Session()
-            # load cookies
+        # load cookies
         for cookie in self._driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
@@ -257,28 +275,34 @@ class EchoCloudVideo(EchoVideo):
         if not isinstance(urls, list):
             urls = [urls]
 
-        if(not self.download_alternative_feeds):
+        if not self.download_alternative_feeds:
             # download_alternative_feeds defaults to False, slice to include only the first one
             urls = urls[:1]
 
         final_result = True
         for counter, single_url in enumerate(urls):
-            if(self.download_alternative_feeds):
-                print('- Downloading video feed {}...'.format(counter + 1))
-            new_filename = (filename + str(counter + 1)) if self.download_alternative_feeds else filename
-            result = self.download_single(session, single_url, output_dir, new_filename, pool_size)
+            if self.download_alternative_feeds:
+                print("- Downloading video feed {}...".format(counter + 1))
+            new_filename = (
+                (filename + str(counter + 1))
+                if self.download_alternative_feeds
+                else filename
+            )
+            result = self.download_single(
+                session, single_url, output_dir, new_filename, pool_size
+            )
             final_result = final_result and result
 
         return final_result
 
     def download_single(self, session, single_url, output_dir, filename, pool_size):
-        if single_url.endswith('.m3u8'):
+        if single_url.endswith(".m3u8"):
             r = session.get(single_url)
             if not r.ok:
                 print("Error: Failed to get m3u8 info. Skipping this video")
                 return False
 
-            lines = [n for n in r.content.decode().split('\n')]
+            lines = [n for n in r.content.decode().split("\n")]
             m3u8_video = None
             m3u8_audio = None
 
@@ -294,7 +318,9 @@ class EchoCloudVideo(EchoVideo):
 
             m3u8_video, m3u8_audio = m3u8_parser.get_video_and_audio()
 
-            if m3u8_video is None:  # even if audio is None it's okay, maybe audio is include with video
+            if (
+                m3u8_video is None
+            ):  # even if audio is None it's okay, maybe audio is include with video
                 print("ERROR: Failed to find video m3u8... skipping this one")
                 return False
             # NOW we can finally start downloading!
@@ -303,44 +329,49 @@ class EchoCloudVideo(EchoVideo):
             audio_file = None
             if m3u8_audio is not None:
                 print("  > Downloading audio:")
-                audio_file = self._download_url_to_dir(urljoin(
-                    single_url, m3u8_audio), output_dir, filename + "_audio",
-                    pool_size, convert_to_mp4=False)
+                audio_file = self._download_url_to_dir(
+                    urljoin(single_url, m3u8_audio),
+                    output_dir,
+                    filename + "_audio",
+                    pool_size,
+                    convert_to_mp4=False,
+                )
             print("  > Downloading video:")
-            video_file = self._download_url_to_dir(urljoin(
-                single_url, m3u8_video), output_dir, filename + "_video",
-                pool_size, convert_to_mp4=False)
-            sys.stdout.write('  > Converting to mp4... ')
+            video_file = self._download_url_to_dir(
+                urljoin(single_url, m3u8_video),
+                output_dir,
+                filename + "_video",
+                pool_size,
+                convert_to_mp4=False,
+            )
+            sys.stdout.write("  > Converting to mp4... ")
             sys.stdout.flush()
 
             # combine audio file with video (separate audio might not exists.)
             self.combine_audio_video(
                 audio_file=audio_file,
                 video_file=video_file,
-                final_file=os.path.join(output_dir, filename + ".mp4")
-                )
+                final_file=os.path.join(output_dir, filename + ".mp4"),
+            )
             # remove left-over plain audio/video files.
             if audio_file is not None:
                 os.remove(audio_file)
             os.remove(video_file)
 
-
         else:  # ends with mp4
             import tqdm
 
             r = session.get(single_url, stream=True)
-            total_size = int(r.headers.get('content-length', 0))
+            total_size = int(r.headers.get("content-length", 0))
             block_size = 1024  # 1 kilobyte
-            with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True) as pbar:
-                with open(os.path.join(output_dir, filename + '.mp4'), 'wb') as f:
+            with tqdm.tqdm(total=total_size, unit="iB", unit_scale=True) as pbar:
+                with open(os.path.join(output_dir, filename + ".mp4"), "wb") as f:
                     for data in r.iter_content(block_size):
                         pbar.update(len(data))
                         f.write(data)
 
-
-
-        print('Done!')
-        print('-' * 60)
+        print("Done!")
+        print("-" * 60)
         return True
 
     @staticmethod
@@ -352,12 +383,11 @@ class EchoCloudVideo(EchoVideo):
         if audio_file is not None:
             _inputs[audio_file] = None
         ff = ffmpy.FFmpeg(
-            global_options='-loglevel panic',
+            global_options="-loglevel panic",
             inputs=_inputs,
-            outputs={final_file: ['-c:v', 'copy', '-c:a', 'ac3']}
+            outputs={final_file: ["-c:v", "copy", "-c:a", "ac3"]},
         )
         ff.run()
-
 
     def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
         def brute_force_get_url(suffix):
@@ -368,31 +398,38 @@ class EchoCloudVideo(EchoVideo):
                 self._driver.get(video_url)
                 try:
                     # the replace is for reversing the escape by the escapped js in the page source
-                    urls = set(re.findall(
-                        'https://[^,"]*?[.]{}'.format(suffix),
-                        self._driver.page_source.replace("\/", "/"))
+                    urls = set(
+                        re.findall(
+                            'https://[^,"]*?[.]{}'.format(suffix),
+                            self._driver.page_source.replace("\/", "/"),
+                        )
                     )
                     return urls
 
                 except selenium.common.exceptions.TimeoutException:
                     if refresh_attempt >= max_attempts:
                         print(
-                            '\r\nERROR: Connection timeouted after {} second for {} attempts... \
-                              Possibly internet problem?'.format(
-                                waitsecond, max_attempts))
+                            "\r\nERROR: Connection timeouted after {} second for {} attempts... \
+                              Possibly internet problem?".format(
+                                waitsecond, max_attempts
+                            )
+                        )
                         raise
                     refresh_attempt += 1
                 except StaleElementReferenceException:
                     if stale_attempt >= max_attempts:
                         print(
-                            '\r\nERROR: Elements are not stable to retrieve after {} attempts... \
-                            Possibly internet problem?'.format(max_attempts))
+                            "\r\nERROR: Elements are not stable to retrieve after {} attempts... \
+                            Possibly internet problem?".format(
+                                max_attempts
+                            )
+                        )
                         raise
                     stale_attempt += 1
 
         def brute_force_get_mp4_url():
             """Forcefully try to find all .mp4 url in the page source"""
-            urls = brute_force_get_url(suffix='mp4')
+            urls = brute_force_get_url(suffix="mp4")
             if len(urls) == 0:
                 raise Exception("None were found.")
             # in many cases, there would be urls in the format of http://xxx.{hd1,hd2,sd1,sd2}
@@ -407,12 +444,16 @@ class EchoCloudVideo(EchoVideo):
         def from_json_m3u8():
             # seems like json would also contain that information so this method tries
             # to retrieve based on that
-            if (not self.video_json['lesson']['hasVideo'] or
-                    not self.video_json['lesson']['hasAvailableVideo']):
+            if (
+                not self.video_json["lesson"]["hasVideo"]
+                or not self.video_json["lesson"]["hasAvailableVideo"]
+            ):
                 return False
 
-            manifests = self.video_json['lesson']['video']['media']['media']['versions'][0]['manifests']
-            m3u8urls = [m['uri'] for m in manifests]
+            manifests = self.video_json["lesson"]["video"]["media"]["media"][
+                "versions"
+            ][0]["manifests"]
+            m3u8urls = [m["uri"] for m in manifests]
             # somehow the hostname for these urls are from amazon (probably offloading
             # to them.) We need to set the host back to echo360.org
             try:
@@ -425,14 +466,18 @@ class EchoCloudVideo(EchoVideo):
             new_hostname = urlparse(self.hostname).netloc
             for url in m3u8urls:
                 parse_result = urlparse(url)
-                new_m3u8urls.append("{}://content.{}{}".format(
-                    parse_result.scheme, new_hostname, parse_result.path
-                ))
+                new_m3u8urls.append(
+                    "{}://content.{}{}".format(
+                        parse_result.scheme, new_hostname, parse_result.path
+                    )
+                )
             return new_m3u8urls
 
         def from_json_mp4():
-            mp4_files = self.video_json['lesson']['video']['media']['media']['current']['primaryFiles']
-            urls = [obj['s3Url'] for obj in mp4_files]
+            mp4_files = self.video_json["lesson"]["video"]["media"]["media"]["current"][
+                "primaryFiles"
+            ]
+            urls = [obj["s3Url"] for obj in mp4_files]
             if len(urls) == 0:
                 raise ValueError("Cannot find mp4 urls")
             # usually hd is the last one. so we will sort in reverse order
@@ -457,13 +502,12 @@ class EchoCloudVideo(EchoVideo):
             _LOGGER.debug("Encountered exception: {}".format(e))
         try:
             _LOGGER.debug("Trying brute_force_all_m3u8 method")
-            m3u8urls = brute_force_get_url(suffix='m3u8')
+            m3u8urls = brute_force_get_url(suffix="m3u8")
         except Exception as e:
             _LOGGER.debug("Encountered exception: {}".format(e))
             _LOGGER.debug("All methods had been exhausted.")
             print("Tried all methods to retrieve videos but all had failed!")
             raise
-
 
         # find one that has audio + video
         m3u8urls = [url for url in m3u8urls if url.endswith("av.m3u8")]
@@ -474,7 +518,8 @@ class EchoCloudVideo(EchoVideo):
                 "in the script. (iii) This lecture only provides audio?\n"
                 "This script is hard-coded to download audio+video. "
                 "If this is your intended behaviour, "
-                "please contact the author.")
+                "please contact the author."
+            )
             return False
         # There could exists multiple m3u8 files
         # (e.g. .../s1_av.m3u8, .../s2_av.m3u8, etc.) Probably to refer to
@@ -507,12 +552,14 @@ class EchoCloudSubVideo(EchoCloudVideo):
     """Some video in echo360 cloud is multi-part and this represents it."""
 
     def __init__(self, video_json, driver, hostname, group_name, alternative_feeds):
-        super(EchoCloudSubVideo, self).__init__(video_json, driver, hostname, alternative_feeds)
+        super(EchoCloudSubVideo, self).__init__(
+            video_json, driver, hostname, alternative_feeds
+        )
         self.group_name = group_name
 
     @property
     def title(self):
         if type(self._title) != str:
             # it's type unicode for python2
-            self._title = self._title.encode('utf-8')
+            self._title = self._title.encode("utf-8")
         return "{} - {}".format(self.group_name, self._title)

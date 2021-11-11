@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r", encoding="utf8") as fh:
     long_description = fh.read()
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     required = f.read().splitlines()
 
 setuptools.setup(
@@ -18,15 +18,15 @@ setuptools.setup(
         "Code": "https://github.com/soraxas/echo360",
         "Issue tracker": "https://github.com/soraxas/echo360/issues",
     },
-    python_requires='>=2.7',
+    python_requires=">=2.7",
     install_requires=required,
-    platforms='linux, macos, windows',
+    platforms="linux, macos, windows",
     entry_points={
-    'console_scripts': [
-        'echo360-download=echo360.main:main',
+        "console_scripts": [
+            "echo360-download=echo360.main:main",
         ],
-        },
-    package_data={'echo360': ['*.py']},
+    },
+    package_data={"echo360": ["*.py"]},
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 2",
@@ -36,9 +36,9 @@ setuptools.setup(
         "Topic :: System :: System Shells",
         "Topic :: Terminals",
         "Topic :: System :: Networking",
-        "License :: OSI Approved :: MIT"
+        "License :: OSI Approved :: MIT",
     ],
     license="MIT",
     author="soraxas",
-    author_email="oscar@tinyiu.com"
+    author_email="oscar@tinyiu.com",
 )
