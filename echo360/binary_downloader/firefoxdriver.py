@@ -7,7 +7,7 @@ class FirefoxDownloader(BinaryDownloader):
         self._download_link_root = (
             "https://github.com/mozilla/geckodriver/releases/download"
         )
-        self._version = "v0.26.0"
+        self._version = "v0.30.0"
 
     def get_os_suffix(self):
         self._os_linux_32 = "linux32"
