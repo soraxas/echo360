@@ -234,7 +234,7 @@ class EchoDownloader(object):
             selected = pick(
                 [v[0] for v in videos_to_be_download],
                 title,
-                multi_select=True,
+                multiselect=True,
                 min_selection_count=1,
             )
             videos_to_be_download = [videos_to_be_download[s[1]] for s in selected]
