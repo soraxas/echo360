@@ -382,12 +382,18 @@ class EchoCloudVideo(EchoVideo):
         _inputs[video_file] = None
         if audio_file is not None:
             _inputs[audio_file] = None
-        ff = ffmpy.FFmpeg(
-            global_options="-loglevel panic",
-            inputs=_inputs,
-            outputs={final_file: ["-c:v", "copy", "-c:a", "ac3"]},
-        )
-        ff.run()
+        try:
+            ff = ffmpy.FFmpeg(
+                global_options="-loglevel panic",
+                inputs=_inputs,
+                outputs={final_file: ["-c:v", "copy", "-c:a", "ac3"]},
+            )
+            ff.run()
+        except ffmpy.FFExecutableNotFoundError:
+            print('[WARN] Skipping mixing of audio/video because "ffmpeg" not installed.')
+        except ffmpy.FFRuntimeError:
+            print("[Error] Skipping mixing of audio/video because ffmpeg exited with non-zero status code.")
+
 
     def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
         def brute_force_get_url(suffix):
