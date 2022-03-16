@@ -8,7 +8,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="echo360",
-    version="2.0",
+    version="v2.1",
     description="Commandline tool for automated downloads of echo360 videos",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -23,7 +23,7 @@ setuptools.setup(
     platforms="linux, macos, windows",
     entry_points={
         "console_scripts": [
-            "echo360-download=echo360.main:main",
+            "echo360-downloader=echo360.main:main",
         ],
     },
     package_data={"echo360": ["*.py"]},
@@ -36,7 +36,7 @@ setuptools.setup(
         "Topic :: System :: System Shells",
         "Topic :: Terminals",
         "Topic :: System :: Networking",
-        "License :: OSI Approved :: MIT",
+        "License :: OSI Approved :: MIT License",
     ],
     license="MIT",
     author="soraxas",
