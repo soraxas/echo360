@@ -44,7 +44,7 @@ echo360-downloader COURSE_URL  # where COURSE_URL is your course url
 
 ### Optional
 
--   ffmpeg (for transcoding ts file to mp4 file) See [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg) for a brief instructions of installing it in different OS.
+-   ffmpeg (for transcoding ts file to mp4 file) See [here (windows)](https://www.easytechguides.com/install-ffmpeg/) or [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg) for a brief instructions of installing it in different OS.
 
 ## Manual
 
