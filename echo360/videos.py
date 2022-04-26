@@ -348,15 +348,15 @@ class EchoCloudVideo(EchoVideo):
             sys.stdout.flush()
 
             # combine audio file with video (separate audio might not exists.)
-            self.combine_audio_video(
+            if self.combine_audio_video(
                 audio_file=audio_file,
                 video_file=video_file,
                 final_file=os.path.join(output_dir, filename + ".mp4"),
-            )
-            # remove left-over plain audio/video files.
-            if audio_file is not None:
-                os.remove(audio_file)
-            os.remove(video_file)
+            ):
+                # remove left-over plain audio/video files. (if mixing was successful)
+                if audio_file is not None:
+                    os.remove(audio_file)
+                os.remove(video_file)
 
         else:  # ends with mp4
             import tqdm
@@ -390,10 +390,16 @@ class EchoCloudVideo(EchoVideo):
             )
             ff.run()
         except ffmpy.FFExecutableNotFoundError:
-            print('[WARN] Skipping mixing of audio/video because "ffmpeg" not installed.')
+            print(
+                '[WARN] Skipping mixing of audio/video because "ffmpeg" not installed.'
+            )
+            return False
         except ffmpy.FFRuntimeError:
-            print("[Error] Skipping mixing of audio/video because ffmpeg exited with non-zero status code.")
-
+            print(
+                "[Error] Skipping mixing of audio/video because ffmpeg exited with non-zero status code."
+            )
+            return False
+        return True
 
     def _loop_find_m3u8_url(self, video_url, waitsecond=15, max_attempts=5):
         def brute_force_get_url(suffix):

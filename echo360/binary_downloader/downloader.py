@@ -13,7 +13,7 @@ class BinaryDownloader(object):
         raise NotImplementedError
 
     def get_os_suffix(self):
-        arch = "64" if sys.maxsize > 2 ** 32 else "32"
+        arch = "64" if sys.maxsize > 2**32 else "32"
         if "linux" in sys.platform:
             if arch == "64":
                 return self._os_linux_64
