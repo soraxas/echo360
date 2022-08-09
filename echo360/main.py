@@ -268,7 +268,7 @@ def main():
         setup_credential = True
 
     def cmd_exists(x):
-        any(
+        return any(
             os.access(os.path.join(path, x), os.X_OK)
             for path in os.environ["PATH"].split(os.pathsep)
         )
