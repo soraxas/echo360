@@ -8,6 +8,7 @@ from .course import EchoCloudCourse
 from .echo_exceptions import EchoLoginError
 
 from pick import pick
+import selenium
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import selenium.common.exceptions as seleniumException
@@ -48,6 +49,17 @@ class EchoDownloader(object):
 
         self._useragent = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
         # self._driver = webdriver.PhantomJS()
+
+        if webdriver_to_use == "phantomjs":
+            selenium_major_version = int(selenium.__version__.split('.')[0])
+            if selenium_major_version >= 4:
+                print("============================================================")
+                print("WARNING: PhantomJS support had been removed in in selenium")
+                print("         version 4. If this app errors out later on, consider")
+                print("         installing earlier version of selenium.")
+                print("         e.g. pip3 install selenium==3.14")
+                print("         (see https://github.com/SeleniumHQ/selenium/blob/58122b261a5f5406da8e5252c9ab54c464da7aa8/py/CHANGES#L324)")
+                print("============================================================")
 
         dcap = dict()
         if use_local_binary:
