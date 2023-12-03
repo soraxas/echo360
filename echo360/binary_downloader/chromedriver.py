@@ -5,7 +5,7 @@ class ChromedriverDownloader(BinaryDownloader):
     def __init__(self):
         self._name = "chromedriver"
         self._download_link_root = "https://chromedriver.storage.googleapis.com"
-        self._version = "2.38"
+        self._version = "114.0.5735.90"
 
     def get_os_suffix(self):
         self._os_linux_32 = "linux32"
@@ -13,7 +13,7 @@ class ChromedriverDownloader(BinaryDownloader):
         self._os_windows_32 = "win32"
         self._os_windows_64 = "win32"
         self._os_darwin_32 = "mac64"
-        self._os_darwin_64 = "mac64"
+        self._os_darwin_64 = "mac_arm64"
         return super(ChromedriverDownloader, self).get_os_suffix()
 
     def get_download_link(self):
