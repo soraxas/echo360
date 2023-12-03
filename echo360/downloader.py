@@ -96,7 +96,8 @@ class EchoDownloader(object):
             opts.add_argument("--window-size=1920x1080")
             opts.add_argument("user-agent={}".format(self._useragent))
             kwargs["chrome_options"] = opts
-            self._driver = webdriver.Chrome(**kwargs)
+            #self._driver = webdriver.Chrome(**kwargs)
+            self._driver = webdriver.Chrome()
         elif webdriver_to_use == "firefox":
             # from selenium.webdriver.firefox.options import Options
             # opts = Options()
@@ -108,7 +109,8 @@ class EchoDownloader(object):
             profile = webdriver.FirefoxProfile()
             profile.set_preference("general.useragent.override", self._useragent)
             # driver = webdriver.Firefox(profile)
-            self._driver = webdriver.Firefox(profile, **kwargs)
+            #self._driver = webdriver.Firefox(profile, **kwargs)
+            self._driver = webdriver.Firefox()
         else:
             self._driver = webdriver.PhantomJS(**kwargs)
 
