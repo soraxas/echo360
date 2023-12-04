@@ -13,7 +13,8 @@ class ChromedriverDownloader(BinaryDownloader):
         self._os_windows_32 = "win32"
         self._os_windows_64 = "win32"
         self._os_darwin_32 = "mac64"
-        self._os_darwin_64 = "mac_arm64"
+        self._os_darwin_64 = "mac64"
+        self._os_darwin_arm = "mac_arm64"
         return super(ChromedriverDownloader, self).get_os_suffix()
 
     def get_download_link(self):

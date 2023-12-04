@@ -15,7 +15,8 @@ class FirefoxDownloader(BinaryDownloader):
         self._os_windows_32 = "win32"
         self._os_windows_64 = "win64"
         self._os_darwin_32 = "macos"
-        self._os_darwin_64 = "macos-aarch64"
+        self._os_darwin_64 = "macos"
+        self._os_darwin_arm = "macos-aarch64"
         return super(FirefoxDownloader, self).get_os_suffix()
 
     def get_download_link(self):
