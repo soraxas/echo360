@@ -1,6 +1,6 @@
 # Echo360 Videos Downloader
 
-[![Package Application with Pyinstaller](https://github.com/soraxas/echo360/workflows/Package%20Application%20with%20Pyinstaller/badge.svg)](https://github.com/soraxas/echo360/actions/)
+[![Package Application with Pyinstaller](https://github.com/soraxas/echo360/actions/workflows/build.yaml/badge.svg)](https://github.com/soraxas/echo360/actions/)
 [![linux-downloads](https://img.shields.io/badge/Download%20Executable-Linux%20&%20Mac-blueviolet)](https://github.com/soraxas/echo360/releases/latest/download/echo360-linux)
 [![windows-downloads](https://img.shields.io/badge/Download%20Executable-Windows-blue)](https://github.com/soraxas/echo360/releases/latest/download/echo360-windows.exe)
 
