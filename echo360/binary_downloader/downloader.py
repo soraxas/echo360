@@ -1,5 +1,6 @@
 import sys
 import os
+import platform
 import stat
 import wget
 import shutil
@@ -25,6 +26,9 @@ class BinaryDownloader(object):
             else:
                 return self._os_windows_32
         elif "darwin" in sys.platform:
+            # detect if this is using arm processor (e.g. M1/M2 Mac)
+            if platform.processor() == "arm":
+                return self._os_darwin_arm
             if arch == "64":
                 return self._os_darwin_64
             else:
