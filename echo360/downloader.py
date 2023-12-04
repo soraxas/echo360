@@ -6,6 +6,8 @@ import re
 
 from .course import EchoCloudCourse
 from .echo_exceptions import EchoLoginError
+from .utils import naive_versiontuple
+
 
 from pick import pick
 import selenium
@@ -51,18 +53,24 @@ class EchoDownloader(object):
         # self._driver = webdriver.PhantomJS()
 
         if webdriver_to_use == "phantomjs":
-            selenium_major_version = int(selenium.__version__.split('.')[0])
+            selenium_major_version = int(selenium.__version__.split(".")[0])
             if selenium_major_version >= 4:
                 print("============================================================")
                 print("WARNING: PhantomJS support had been removed in in selenium")
                 print("         version 4. If this app errors out later on, consider")
                 print("         installing earlier version of selenium.")
                 print("         e.g. pip3 install selenium==3.14")
-                print("         (see https://github.com/SeleniumHQ/selenium/blob/58122b261a5f5406da8e5252c9ab54c464da7aa8/py/CHANGES#L324)")
+                print(
+                    "         (see https://github.com/SeleniumHQ/selenium/blob/58122b261a5f5406da8e5252c9ab54c464da7aa8/py/CHANGES#L324)"
+                )
                 print("============================================================")
 
         dcap = dict()
-        if use_local_binary:
+        if use_local_binary and (
+            naive_versiontuple(selenium.__version__) < naive_versiontuple("4.10.0")
+        ):
+            # selenium version >= 4.10.0 no longer uses the following kwargs.
+            # https://github.com/SeleniumHQ/selenium/commit/9f5801c82fb3be3d5850707c46c3f8176e3ccd8e
             if webdriver_to_use == "chrome":
                 from .binary_downloader.chromedriver import ChromedriverDownloader
 
@@ -96,8 +104,7 @@ class EchoDownloader(object):
             opts.add_argument("--window-size=1920x1080")
             opts.add_argument("user-agent={}".format(self._useragent))
             kwargs["chrome_options"] = opts
-            #self._driver = webdriver.Chrome(**kwargs)
-            self._driver = webdriver.Chrome()
+            self._driver = webdriver.Chrome(**kwargs)
         elif webdriver_to_use == "firefox":
             # from selenium.webdriver.firefox.options import Options
             # opts = Options()
@@ -109,8 +116,7 @@ class EchoDownloader(object):
             profile = webdriver.FirefoxProfile()
             profile.set_preference("general.useragent.override", self._useragent)
             # driver = webdriver.Firefox(profile)
-            #self._driver = webdriver.Firefox(profile, **kwargs)
-            self._driver = webdriver.Firefox()
+            self._driver = webdriver.Firefox(profile, **kwargs)
         else:
             self._driver = webdriver.PhantomJS(**kwargs)
 
