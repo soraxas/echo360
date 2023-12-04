@@ -8,7 +8,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="echo360",
-    version="v2.1",
+    version="v3.0",
     description="Commandline tool for automated downloads of echo360 videos",
     long_description=long_description,
     long_description_content_type="text/markdown",
