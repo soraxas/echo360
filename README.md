@@ -1,9 +1,9 @@
 # Echo360 Videos Downloader
 
+[![PyPI - Version](https://img.shields.io/pypi/v/echo360)](https://pypi.org/project/echo360/)
 [![Package Application with Pyinstaller](https://github.com/soraxas/echo360/actions/workflows/build.yaml/badge.svg)](https://github.com/soraxas/echo360/actions/)
 [![linux-downloads](https://img.shields.io/badge/Download%20Executable-Linux%20&%20Mac-blueviolet)](https://github.com/soraxas/echo360/releases/latest/download/echo360-linux)
 [![windows-downloads](https://img.shields.io/badge/Download%20Executable-Windows-blue)](https://github.com/soraxas/echo360/releases/latest/download/echo360-windows.exe)
-
 
 echo360 is a command-line Python tool that allows you to download lecture videos from any university's Echo360 system and echo360 Cloud platform. All that's required is the particular course's url. See the FAQ for tips on how to find it.
 
