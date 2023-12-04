@@ -21,6 +21,101 @@ warnings.filterwarnings("ignore", category=UserWarning, module="selenium")
 _LOGGER = logging.getLogger(__name__)
 
 
+def build_chrome_driver(
+    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path
+):
+    from selenium.webdriver.chrome.options import Options
+
+    opts = Options()
+    if not setup_credential:
+        opts.add_argument("--headless")
+    opts.add_argument("--window-size=1920x1080")
+    opts.add_argument("user-agent={}".format(user_agent))
+
+    kwargs = dict()
+    if selenium_version_ge_4100:
+        kwargs["options"] = opts
+    else:
+        kwargs["chrome_options"] = opts
+
+    if selenium_version_ge_4100:
+        from selenium.webdriver.chrome.service import Service
+
+        service = Service(**kwargs, log_file=log_path)
+        kwargs = dict(
+            service=service,
+            options=opts,
+        )
+    else:
+        if use_local_binary:
+            # newer selenium helps us to auto-download executable
+            from .binary_downloader.chromedriver import ChromedriverDownloader
+
+            kwargs["executable_path"] = ChromedriverDownloader().get_bin()
+        kwargs.update(
+            dict(
+                service_log_path=log_path,
+                chrome_options=opts,
+            )
+        )
+    return webdriver.Chrome(**kwargs)
+
+
+def build_firefox_driver(
+    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path
+):
+    profile = webdriver.FirefoxProfile()
+    profile.set_preference("general.useragent.override", user_agent)
+    kwargs = dict()
+
+    if selenium_version_ge_4100:
+        from selenium.webdriver.firefox.service import Service
+        from selenium.webdriver.firefox.options import Options
+
+        option = Options()
+        option.profile = profile
+
+        service = Service(**kwargs, log_file=log_path)
+        kwargs = dict(
+            service=service,
+            options=option,
+        )
+    else:
+        if use_local_binary:
+            from .binary_downloader.firefoxdriver import FirefoxDownloader
+
+            kwargs["executable_path"] = FirefoxDownloader().get_bin()
+        kwargs.update(
+            dict(
+                service_log_path=log_path,
+                firefox_profile=profile,
+            )
+        )
+    return webdriver.Firefox(**kwargs)
+
+
+def build_phantomjs_driver(
+    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path
+):
+    dcap = dict()
+    dcap.update(DesiredCapabilities.PHANTOMJS)
+    dcap["phantomjs.page.settings.userAgent"] = (
+        "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
+        "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
+    )
+    kwargs = {
+        "desired_capabilities": dcap,
+        "service_log_path": log_path,
+    }
+
+    if use_local_binary:
+        from .binary_downloader.phantomjs import PhantomjsDownloader
+
+        kwargs["executable_path"] = PhantomjsDownloader().get_bin()
+
+    return webdriver.PhantomJS(**kwargs)
+
+
 class EchoDownloader(object):
     def __init__(
         self,
@@ -65,60 +160,22 @@ class EchoDownloader(object):
                 )
                 print("============================================================")
 
-        dcap = dict()
-        if use_local_binary and (
-            naive_versiontuple(selenium.__version__) < naive_versiontuple("4.10.0")
-        ):
-            # selenium version >= 4.10.0 no longer uses the following kwargs.
-            # https://github.com/SeleniumHQ/selenium/commit/9f5801c82fb3be3d5850707c46c3f8176e3ccd8e
-            if webdriver_to_use == "chrome":
-                from .binary_downloader.chromedriver import ChromedriverDownloader
-
-                get_bin = ChromedriverDownloader().get_bin
-            elif webdriver_to_use == "firefox":
-                from .binary_downloader.firefoxdriver import FirefoxDownloader
-
-                get_bin = FirefoxDownloader().get_bin
-            else:
-                from .binary_downloader.phantomjs import PhantomjsDownloader
-
-                get_bin = PhantomjsDownloader().get_bin
-                dcap.update(DesiredCapabilities.PHANTOMJS)
-                dcap["phantomjs.page.settings.userAgent"] = (
-                    "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 "
-                    "(KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25"
-                )
-            kwargs = {
-                "executable_path": get_bin(),
-                "desired_capabilities": dcap,
-                "service_log_path": log_path,
-            }
-        else:
-            kwargs = {}
         if webdriver_to_use == "chrome":
-            from selenium.webdriver.chrome.options import Options
-
-            opts = Options()
-            if not setup_credential:
-                opts.add_argument("--headless")
-            opts.add_argument("--window-size=1920x1080")
-            opts.add_argument("user-agent={}".format(self._useragent))
-            kwargs["chrome_options"] = opts
-            self._driver = webdriver.Chrome(**kwargs)
+            driver_builder = build_chrome_driver
         elif webdriver_to_use == "firefox":
-            # from selenium.webdriver.firefox.options import Options
-            # opts = Options()
-            # if not setup_credential:
-            #     opts.add_argument("--headless")
-            # # opts.add_argument("--window-size=1920x1080")
-            # opts.add_argument("user-agent={}".format(self._useragent))
-            # kwargs['firefox_options'] = opts
-            profile = webdriver.FirefoxProfile()
-            profile.set_preference("general.useragent.override", self._useragent)
-            # driver = webdriver.Firefox(profile)
-            self._driver = webdriver.Firefox(profile, **kwargs)
+            driver_builder = build_firefox_driver
         else:
-            self._driver = webdriver.PhantomJS(**kwargs)
+            driver_builder = build_phantomjs_driver
+
+        self._driver = driver_builder(
+            use_local_binary=use_local_binary,
+            selenium_version_ge_4100=(
+                naive_versiontuple(selenium.__version__) >= naive_versiontuple("4.10.0")
+            ),
+            setup_credential=setup_credential,
+            user_agent=self._useragent,
+            log_path=log_path,
+        )
 
         self.setup_credential = setup_credential
         # Monkey Patch, set the course's driver to the one from .downloader
