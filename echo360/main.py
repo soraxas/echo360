@@ -95,6 +95,14 @@ def handle_args():
                                 (implies using chrome-driver)",
     )
     parser.add_argument(
+        "--remember-login",
+        action="store_true",
+        default=False,
+        dest="save_browser_login",
+        help="Remembers login, so you only need to do 2FA once. \
+                                (Saves Chrome browser cookies to this folder)"
+    )
+    parser.add_argument(
         "--download-phantomjs-binary",
         action="store_true",
         default=False,
