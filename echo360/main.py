@@ -239,6 +239,7 @@ def handle_args():
         not args["auto"],
         args["alternative_feeds"],
         args["echo360cloud"],
+        args["save_browser_login"],
     )
 
 
@@ -259,6 +260,7 @@ def main():
         manual,
         alternative_feeds,
         usingEcho360Cloud,
+        save_browser_login,
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -352,6 +354,7 @@ def main():
         use_local_binary=use_local_binary,
         webdriver_to_use=webdriver_to_use,
         interactive_mode=interactive_mode,
+        save_browser_login=save_browser_login,
     )
 
     _LOGGER.debug(
