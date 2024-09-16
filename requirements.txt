@@ -5,4 +5,5 @@ requests>=2.8.14
 gevent>=1.2.2
 wget>=3.2
 pick==0.6.7
+pip_ensure_version==1.0.0
 tqdm

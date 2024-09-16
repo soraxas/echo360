@@ -115,6 +115,13 @@ def handle_args():
                               binary file for phantomjs (will override system bin)",
     )
     parser.add_argument(
+        "--stealth",
+        action="store_true",
+        default=False,
+        dest="use_stealth",
+        help="Use Stealth Chrome Driver to bypass some bot detection (e.g. useful for FIDO).",
+    )
+    parser.add_argument(
         "--chrome",
         action="store_true",
         default=False,
@@ -222,7 +229,9 @@ def handle_args():
     _LOGGER.debug("Hostname: %s, UUID: %s", course_hostname, course_url)
 
     webdriver_to_use = "phantomjs"
-    if args["use_chrome"]:
+    if args["use_stealth"]:
+        webdriver_to_use = "stealth"
+    elif args["use_chrome"]:
         webdriver_to_use = "chrome"
     elif args["use_firefox"]:
         webdriver_to_use = "firefox"
@@ -305,28 +314,32 @@ def main():
         )
 
         binary_type = "geckodriver"
+    elif webdriver_to_use == "stealth":
+        binary_type = None
     else:
         from .binary_downloader.phantomjs import (
             PhantomjsDownloader as binary_downloader,
         )
 
         binary_type = "phantomjs"
-    binary_downloader = binary_downloader()  # initialise class
-    _LOGGER.debug(
-        "binary_downloader link: %s, bin path: %s",
-        binary_downloader.get_download_link(),
-        binary_downloader.get_bin(),
-    )
-    # First test for existance of localbinary file
-    if not os.path.isfile(binary_downloader.get_bin()):
-        # If failed, then test for existance of global executable in PATH
-        if cmd_exists(binary_type):
-            use_local_binary = False
-            _LOGGER.debug("Using global binary file")
-        else:
-            # None exists, download binary file
-            start_download_binary(binary_downloader, binary_type)
-            _LOGGER.debug("Downloading binary file")
+
+    if binary_type:
+        binary_downloader = binary_downloader()  # initialise class
+        _LOGGER.debug(
+            "binary_downloader link: %s, bin path: %s",
+            binary_downloader.get_download_link(),
+            binary_downloader.get_bin(),
+        )
+        # First test for existance of localbinary file
+        if not os.path.isfile(binary_downloader.get_bin()):
+            # If failed, then test for existance of global executable in PATH
+            if cmd_exists(binary_type):
+                use_local_binary = False
+                _LOGGER.debug("Using global binary file")
+            else:
+                # None exists, download binary file
+                start_download_binary(binary_downloader, binary_type)
+                _LOGGER.debug("Downloading binary file")
 
     if download_binary:
         start_download_binary(binary_downloader, binary_type, manual=True)

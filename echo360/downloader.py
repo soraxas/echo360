@@ -8,7 +8,7 @@ from .course import EchoCloudCourse
 from .echo_exceptions import EchoLoginError
 from .utils import naive_versiontuple, PERSISTENT_SESSION_FOLDER
 
-
+import pip_ensure_version
 from pick import pick
 import selenium
 from selenium import webdriver
@@ -19,6 +19,40 @@ import warnings  # hide the warnings of phantomjs being deprecated
 warnings.filterwarnings("ignore", category=UserWarning, module="selenium")
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def build_stealth_driver(
+    use_local_binary,
+    selenium_version_ge_4100,
+    setup_credential,
+    user_agent,
+    log_path,
+    persistent_session,
+):
+    pip_ensure_version.require_package("undetected-chromedriver")
+    import undetected_chromedriver as uc
+
+    kwargs = dict()
+    if persistent_session:
+        kwargs["user_data_dir"] = PERSISTENT_SESSION_FOLDER
+        print(
+            ">> Warning: persistent session *might* not supported by stealth. If it has issue, try to delete '{}' folder.".format(
+                PERSISTENT_SESSION_FOLDER
+            )
+        )
+
+    from selenium.webdriver.chrome.options import Options
+
+    opts = Options()
+    opts.add_argument("--window-size=1920x1080")
+    opts.add_argument("user-agent={}".format(user_agent))
+
+    if not selenium_version_ge_4100:
+        print(">> This version of selenium might not be supported by stealth")
+
+    driver = uc.Chrome(**kwargs)
+
+    return driver
 
 
 def build_chrome_driver(
@@ -193,6 +227,8 @@ class EchoDownloader(object):
             driver_builder = build_chrome_driver
         elif webdriver_to_use == "firefox":
             driver_builder = build_firefox_driver
+        elif webdriver_to_use == "stealth":
+            driver_builder = build_stealth_driver
         else:
             driver_builder = build_phantomjs_driver
 
