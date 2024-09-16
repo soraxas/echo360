@@ -20,6 +20,7 @@ except ImportError as e:
 from .echo_exceptions import EchoLoginError
 from .downloader import EchoDownloader
 from .course import EchoCourse, EchoCloudCourse
+from .utils import PERSISTENT_SESSION_FOLDER
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
@@ -93,6 +94,17 @@ def handle_args():
         help="Open a chrome instance to expose an ability for user to log into \
                                 any website to obtain credentials needed before proceeding. \
                                 (implies using chrome-driver)",
+    )
+    parser.add_argument(
+        "--persistent-session",
+        "-P",
+        action="store_true",
+        default=False,
+        dest="persistent_session",
+        help="Starts a persistent session (helps to store credentials). Session uses \
+            '{}' folder, and currently only supports chrome driver.".format(
+            PERSISTENT_SESSION_FOLDER
+        ),
     )
     parser.add_argument(
         "--download-phantomjs-binary",
@@ -231,6 +243,7 @@ def handle_args():
         not args["auto"],
         args["alternative_feeds"],
         args["echo360cloud"],
+        args["persistent_session"],
     )
 
 
@@ -251,6 +264,7 @@ def main():
         manual,
         alternative_feeds,
         usingEcho360Cloud,
+        persistent_session,
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -344,6 +358,7 @@ def main():
         use_local_binary=use_local_binary,
         webdriver_to_use=webdriver_to_use,
         interactive_mode=interactive_mode,
+        persistent_session=persistent_session,
     )
 
     _LOGGER.debug(
