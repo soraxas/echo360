@@ -95,12 +95,11 @@ def handle_args():
                                 (implies using chrome-driver)",
     )
     parser.add_argument(
-        "--remember-login",
+        "--persistent-session",
         action="store_true",
         default=False,
-        dest="save_browser_login",
-        help="Remembers login, so you only need to do 2FA once. \
-                                (Saves Chrome browser cookies to this folder)"
+        dest="persistent_session",
+        help="Starts a persistent session (helps to store credentials). Session uses '_browser_user_data_dir' folder, and currently only supports chrome driver.",
     )
     parser.add_argument(
         "--download-phantomjs-binary",
@@ -239,7 +238,7 @@ def handle_args():
         not args["auto"],
         args["alternative_feeds"],
         args["echo360cloud"],
-        args["save_browser_login"],
+        args["persistent_session"],
     )
 
 
@@ -260,7 +259,7 @@ def main():
         manual,
         alternative_feeds,
         usingEcho360Cloud,
-        save_browser_login,
+        persistent_session,
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -354,7 +353,7 @@ def main():
         use_local_binary=use_local_binary,
         webdriver_to_use=webdriver_to_use,
         interactive_mode=interactive_mode,
-        save_browser_login=save_browser_login,
+        persistent_session=persistent_session,
     )
 
     _LOGGER.debug(

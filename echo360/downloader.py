@@ -22,17 +22,16 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def build_chrome_driver(
-    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, save_browser_login,  
+    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, persistent_session,
 ):
     from selenium.webdriver.chrome.options import Options
 
     opts = Options()
     if not setup_credential:
         opts.add_argument("--headless")
-    if save_browser_login:
-        loginFolderPath = '_browser_login_data' # default current dir
-        opts.add_argument(f"--user-data-dir={loginFolderPath}")
-        #print(f"opt: --user-data-dir={loginFolderPath}")
+    if persistent_session:
+        folder_path = '_browser_user_data_dir' # default current dir
+        opts.add_argument("--user-data-dir={}".format(folder_path))
     opts.add_argument("--window-size=1920x1080")
     opts.add_argument("user-agent={}".format(user_agent))
 
@@ -66,8 +65,11 @@ def build_chrome_driver(
 
 
 def build_firefox_driver(
-    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, save_browser_login, 
+    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, persistent_session,
 ):
+    if persistent_session:
+        raise NotImplementedError("Save-login not implemented for Firefox! Feel free to make a PR for it...")
+
     profile = webdriver.FirefoxProfile()
     profile.set_preference("general.useragent.override", user_agent)
     kwargs = dict()
@@ -95,16 +97,15 @@ def build_firefox_driver(
                 firefox_profile=profile,
             )
         )
-
-    if save_browser_login:
-        print("Save-login not implemented for Firefox! Feel free to make a PR for it...")
-
     return webdriver.Firefox(**kwargs)
 
 
 def build_phantomjs_driver(
-    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, save_browser_login
+    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, persistent_session
 ):
+    if persistent_session:
+        raise NotImplementedError("Save-login not implemented for Firefox! Feel free to make a PR for it...")
+
     dcap = dict()
     dcap.update(DesiredCapabilities.PHANTOMJS)
     dcap["phantomjs.page.settings.userAgent"] = (
@@ -120,8 +121,6 @@ def build_phantomjs_driver(
         from .binary_downloader.phantomjs import PhantomjsDownloader
 
         kwargs["executable_path"] = PhantomjsDownloader().get_bin()
-    if save_browser_login:
-        print("Save-login not implemented for PhantomJS! Feel free to make a PR for it...")
 
     return webdriver.PhantomJS(**kwargs)
 
@@ -138,7 +137,7 @@ class EchoDownloader(object):
         use_local_binary=False,
         webdriver_to_use="phantomjs",
         interactive_mode=False,
-        save_browser_login=False,
+        persistent_session=False,
     ):
         self._course = course
         root_path = os.path.dirname(os.path.abspath(sys.modules["__main__"].__file__))
@@ -186,11 +185,10 @@ class EchoDownloader(object):
             setup_credential=setup_credential,
             user_agent=self._useragent,
             log_path=log_path,
-            save_browser_login=save_browser_login,
+            persistent_session=persistent_session,
         )
 
         self.setup_credential = setup_credential
-        self.save_browser_login = save_browser_login 
         # Monkey Patch, set the course's driver to the one from .downloader
         self._course.set_driver(self._driver)
         self._videos = []
@@ -282,10 +280,6 @@ class EchoDownloader(object):
             sys.stdout.write(
                 ">> I'm gonna assume you are responsible enough to had "
                 "finished logged in by now ;)\n"
-            )
-        if self.save_browser_login:
-            sys.stdout.write(
-                ">> If Chrome, will cache browser login in this folder! \n"
             )
         else:
             sys.stdout.write('>> Logging into "{0}"... '.format(self._course.url))
