@@ -20,6 +20,7 @@ except ImportError as e:
 from .echo_exceptions import EchoLoginError
 from .downloader import EchoDownloader
 from .course import EchoCourse, EchoCloudCourse
+from .utils import PERSISTENT_SESSION_FOLDER
 
 _DEFAULT_BEFORE_DATE = datetime(2900, 1, 1).date()
 _DEFAULT_AFTER_DATE = datetime(1100, 1, 1).date()
@@ -96,10 +97,14 @@ def handle_args():
     )
     parser.add_argument(
         "--persistent-session",
+        "-P",
         action="store_true",
         default=False,
         dest="persistent_session",
-        help="Starts a persistent session (helps to store credentials). Session uses '_browser_user_data_dir' folder, and currently only supports chrome driver.",
+        help="Starts a persistent session (helps to store credentials). Session uses \
+            '{}' folder, and currently only supports chrome driver.".format(
+            PERSISTENT_SESSION_FOLDER
+        ),
     )
     parser.add_argument(
         "--download-phantomjs-binary",

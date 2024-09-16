@@ -6,7 +6,7 @@ import re
 
 from .course import EchoCloudCourse
 from .echo_exceptions import EchoLoginError
-from .utils import naive_versiontuple
+from .utils import naive_versiontuple, PERSISTENT_SESSION_FOLDER
 
 
 from pick import pick
@@ -35,7 +35,7 @@ def build_chrome_driver(
     if not setup_credential:
         opts.add_argument("--headless")
     if persistent_session:
-        folder_path = "_browser_user_data_dir"  # default current dir
+        folder_path = PERSISTENT_SESSION_FOLDER  # default current dir
         opts.add_argument("--user-data-dir={}".format(folder_path))
     opts.add_argument("--window-size=1920x1080")
     opts.add_argument("user-agent={}".format(user_agent))
