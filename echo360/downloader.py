@@ -22,7 +22,12 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def build_chrome_driver(
-    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, persistent_session,
+    use_local_binary,
+    selenium_version_ge_4100,
+    setup_credential,
+    user_agent,
+    log_path,
+    persistent_session,
 ):
     from selenium.webdriver.chrome.options import Options
 
@@ -30,7 +35,7 @@ def build_chrome_driver(
     if not setup_credential:
         opts.add_argument("--headless")
     if persistent_session:
-        folder_path = '_browser_user_data_dir' # default current dir
+        folder_path = "_browser_user_data_dir"  # default current dir
         opts.add_argument("--user-data-dir={}".format(folder_path))
     opts.add_argument("--window-size=1920x1080")
     opts.add_argument("user-agent={}".format(user_agent))
@@ -65,10 +70,17 @@ def build_chrome_driver(
 
 
 def build_firefox_driver(
-    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, persistent_session,
+    use_local_binary,
+    selenium_version_ge_4100,
+    setup_credential,
+    user_agent,
+    log_path,
+    persistent_session,
 ):
     if persistent_session:
-        raise NotImplementedError("Save-login not implemented for Firefox! Feel free to make a PR for it...")
+        raise NotImplementedError(
+            "Save-login not implemented for Firefox! Feel free to make a PR for it..."
+        )
 
     profile = webdriver.FirefoxProfile()
     profile.set_preference("general.useragent.override", user_agent)
@@ -101,10 +113,17 @@ def build_firefox_driver(
 
 
 def build_phantomjs_driver(
-    use_local_binary, selenium_version_ge_4100, setup_credential, user_agent, log_path, persistent_session
+    use_local_binary,
+    selenium_version_ge_4100,
+    setup_credential,
+    user_agent,
+    log_path,
+    persistent_session,
 ):
     if persistent_session:
-        raise NotImplementedError("Save-login not implemented for Firefox! Feel free to make a PR for it...")
+        raise NotImplementedError(
+            "Save-login not implemented for Firefox! Feel free to make a PR for it..."
+        )
 
     dcap = dict()
     dcap.update(DesiredCapabilities.PHANTOMJS)
