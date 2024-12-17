@@ -297,7 +297,7 @@ class EchoCloudVideo(EchoVideo):
 
     def download_single(self, session, single_url, output_dir, filename, pool_size):
         if os.path.exists(os.path.join(output_dir, filename + ".mp4")):
-            print(f" > Skip download video")
+            print(" > Skipping downloaded video")
             print("-" * 60)
             return True
         if single_url.endswith(".m3u8"):
