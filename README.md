@@ -15,7 +15,7 @@ See it in action:
     <img width="700" height="auto" src="docs/images/demo.gif" alt="echo360 demo" />
 </p>
 
-**NEWS:** It now works with `echo360.org` platform as well. Special thanks to [*@cloudrac3r*](https://github.com/cloudrac3r) and *Emma* for their kind offering of providing sources and helped debugging it. Read [FAQ](#echo360-cloud) for details.
+**NEWS:** It now works with `echo360.org` platform as well. Special thanks to [_@cloudrac3r_](https://github.com/cloudrac3r) and _Emma_ for their kind offering of providing sources and helped debugging it. Read [FAQ](#echo360-cloud) for details.
 
 # Getting Started
 
@@ -44,7 +44,7 @@ echo360-downloader COURSE_URL  # where COURSE_URL is your course url
 
 ### Optional
 
--   ffmpeg (for transcoding ts file to mp4 file) See [here (windows)](https://www.easytechguides.com/install-ffmpeg/) or [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg) for a brief instructions of installing it in different OS.
+- ffmpeg (for transcoding ts file to mp4 file) See [here (windows)](https://www.easytechguides.com/install-ffmpeg/) or [here](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg) for a brief instructions of installing it in different OS.
 
 ## Manual
 
@@ -62,9 +62,9 @@ python echo360.py
 
 ### Operating System
 
--   Linux
--   OS X
--   Windows
+- Linux
+- OS X
+- Windows
 
 # Usage
 
@@ -78,6 +78,7 @@ python echo360.py
 ```
 
 ### Script args
+
 ```
 >>> usage: echo360.py [-h] [--output OUTPUT_PATH]
                   [--after-date AFTER_DATEYYYY-MM-DD)]
@@ -135,6 +136,7 @@ optional arguments:
                         downloader will also try to download the second
                         video, which could be the alternative feed. Might
                         only work on some 'echo360.org' hosts.
+  --subtitles, -s       Download VTT subtitles for each video feed.
   --debug               Enable extensive logging.
   --auto                Only effective for 'echo360.org' host. When set, this
                         script will attempts to automatically redirects after
@@ -145,6 +147,7 @@ optional arguments:
                         default behaviour and exists only for backward
                         compatibility reason.
 ```
+
 # Examples
 
 ```shell
@@ -208,11 +211,15 @@ This is first built for the echo system in the University of Sydney, and then va
 ```shell
 https://$(hostname)/ess/portal/section/$(UUID)
 ```
+
 or
+
 ```shell
 https://echo360.org[.xx]/
 ```
+
 or with a dot net variant
+
 ```shell
 https://echo360.net[.xx]/
 ```
@@ -252,34 +259,38 @@ Echo360 cloud refers to websites in the format of `https://echo360.org[.xx]`. Th
 This method requires you to setup SSO credentials, therefore, it needs to open up a browser for you to setup your own university's SSO credentials.
 
 To download videos, run:
+
 ```shell
 ./run.sh https://echo360.<org|net>[.xx]/section/$(UUID)/home
 ```
-where `[.xx]` is an optional country flag specific to your echo360 platform and `$(UUID)` is the unique identifier for your course. This should the url that you can retrieve from your course's *main page* like the following.
+
+where `[.xx]` is an optional country flag specific to your echo360 platform and `$(UUID)` is the unique identifier for your course. This should the url that you can retrieve from your course's _main page_ like the following.
 
 <img height="auto" src="docs/images/echo360cloud_course-page.png" alt="echo360 cloud course main page" />
 
 Note that this implies `setup-credential` option and will use chrome-webdriver by default. If you don't have chrome or prefer to use firefox, run it with the ` --firefox` flag like so:
+
 ```shell
 ./run.sh https://echo360.<org|net>[.xx]/section/$(UUID)/home --firefox
 ```
 
 After running the command, it will opens up a browser instance, most likely with a login page. You should then login with your student's credentials like what you would normally do. After you have successfully logged in, the module should automatically redirects you and continues. If the script hangs (e.g. failed to recognises that you have logged in), feel free to let me know.
 
-
 ### I'm not sure of how to run it?
 
 First, you'd need to install [Python](https://www.python.org/downloads/) in your system. Then, you can follow the youtube tutorial videos to get an idea of how to use the module.
 
 - For [Windows users](https://www.youtube.com/watch?v=Lv1wtjnCcwI) (and showcased how to retrieve actual echo360 course url)
-[![](docs/images/youtube_win_tutorial.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
+  [![](docs/images/youtube_win_tutorial.jpg)](https://www.youtube.com/watch?v=Lv1wtjnCcwI)
 
 ### My credentials does not work?
 
 You can setup any credentials need with manually logging into websites, by running the script with:
+
 ```sh
 ./run.sh ECHO360_URL --setup-credential
 ```
+
 This will open up a chrome instance that allows you to log into your website as you normally do. Afterwards, simply type 'continue' into your shell and press enter to continue to proceeds with the rest of the script.
 
 ### My credentials does not work (echo360.org)?
@@ -287,21 +298,27 @@ This will open up a chrome instance that allows you to log into your website as 
 For echo360.org, the default behaviour is it will always require you to setup-credentials, and the module will automatically detect login token and proceed the download process. For some institutions, this seems to be not sufficient (#29).
 
 You can disable such behaviour with
+
 ```sh
 ./run.sh ECHO360_ORG_URL --manual
 ```
+
 for manual setup; and once you had logged in, type
+
 ```sh
 continue
 ```
+
 in your terminal to continue.
 
 ### How do I download only individual video(s)?
 
 You are in luck! It is now possible to pick a subset of videos to download from (instead of needing to download everything like before). Just pass the interactive argument like this:
+
 ```sh
 ./run.sh ECHO360_URL --interactive  # or ./run.sh ECHO360_URL -i
 ```
+
 ...and it shall presents an interactive screen for you to pick each individual video(s) that you want to download, like the screenshot as shown below.
 
 <img src="/docs/images/pick_individual_videos_screenshot.png" width="650" height="auto" >

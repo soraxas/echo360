@@ -59,3 +59,5 @@ target/
 bin/
 default_out_path/
 _browser_user_data_dir/
+
+.vscode/

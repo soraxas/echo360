@@ -187,7 +187,7 @@ class EchoVideo(object):
 
 class EchoCloudVideos(EchoVideos):
     def __init__(
-        self, videos_json, driver, hostname, alternative_feeds, skip_video_on_error=True
+        self, videos_json, driver, hostname, alternative_feeds, subtitles, skip_video_on_error=True
     ):
         assert videos_json is not None
         self._driver = driver
@@ -199,7 +199,7 @@ class EchoCloudVideos(EchoVideos):
             try:
                 self._videos.append(
                     EchoCloudVideo(
-                        video_json, self._driver, hostname, alternative_feeds
+                        video_json, self._driver, hostname, alternative_feeds, subtitles
                     )
                 )
             except Exception:
@@ -219,13 +219,14 @@ class EchoCloudVideo(EchoVideo):
     def video_url(self):
         return "{}/lesson/{}/classroom".format(self.hostname, self.video_id)
 
-    def __init__(self, video_json, driver, hostname, alternative_feeds):
+    def __init__(self, video_json, driver, hostname, alternative_feeds, subtitles):
         self.hostname = hostname
         self._driver = driver
         self.video_json = video_json
         self.is_multipart_video = False
         self.sub_videos = [self]
         self.download_alternative_feeds = alternative_feeds
+        self.download_subtitles = subtitles
         if "lessons" in video_json:
             # IS a multi-part lesson.
             self.sub_videos = [
@@ -329,6 +330,28 @@ class EchoCloudVideo(EchoVideo):
                 return False
             # NOW we can finally start downloading!
             from .hls_downloader import urljoin
+
+            if self.download_subtitles:
+                # hacky way to get the current url media id
+                # not sure if each feed can have a different media id, so better download it for every feed.
+                try:
+                    media_id = [media["id"] for media in self.video_json['lesson']['medias'] if media["id"] in single_url][0]
+                except IndexError:
+                    media_id = None
+                if media_id is not None:
+                    print("  > Downloading subtitles:")
+                    vtt_url = f"{self.hostname}/api/ui/echoplayer/lessons/{self.video_id}/medias/{media_id}/transcript-file?format=vtt"
+                    cookies = {cookie['name']: cookie['value'] for cookie in self._driver.get_cookies()}
+                    response = requests.get(vtt_url, cookies=cookies)
+                    if response.status_code == 200:
+                        head = requests.head(vtt_url, cookies=cookies)
+                        if head.status_code == 200:
+                            print(f"Original subtitle name: {head.headers['Content-Disposition']}")
+                        # Use same filename as mp4 since VLC will automatically use a vtt if the filename matches.
+                        with open(os.path.join(output_dir, f"{filename}.vtt"), "wb") as file:
+                            file.write(response.content)
+                    else:
+                        print("No subtitles found.")
 
             audio_file = None
             if m3u8_audio is not None:

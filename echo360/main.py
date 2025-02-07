@@ -163,6 +163,14 @@ def handle_args():
                 some 'echo360.org' hosts.",
     )
     parser.add_argument(
+        "--subtitles",
+        "-s",
+        action="store_true",
+        default=False,
+        dest="subtitles",
+        help="Download VTT subtitles for each video feed.",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         default=False,
@@ -253,6 +261,7 @@ def handle_args():
         args["alternative_feeds"],
         args["echo360cloud"],
         args["persistent_session"],
+        args["subtitles"],
     )
 
 
@@ -274,6 +283,7 @@ def main():
         alternative_feeds,
         usingEcho360Cloud,
         persistent_session,
+        subtitles,
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -350,7 +360,7 @@ def main():
         course_uuid = re.search(
             "[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCloudCourse(course_uuid, course_hostname, alternative_feeds)
+        course = EchoCloudCourse(course_uuid, course_hostname, alternative_feeds, subtitles=subtitles)
     else:
         # import it here for monkey patching gevent, to fix the followings:
         # MonkeyPatchWarning: Monkey-patching ssl after ssl has already been
@@ -360,7 +370,7 @@ def main():
         course_uuid = re.search(
             "[^/]+(?=/$|$)", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCourse(course_uuid, course_hostname)
+        course = EchoCourse(course_uuid, course_hostname, subtitles=subtitles)
     downloader = EchoDownloader(
         course,
         output_path,
