@@ -16,6 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException
 
+from .utils import strip_illegal_path
 from .hls_downloader import Downloader
 from .naive_m3u8_parser import NaiveM3U8Parser
 
@@ -187,11 +188,39 @@ class EchoVideo(object):
 
 class EchoCloudVideos(EchoVideos):
     def __init__(
-        self, videos_json, driver, hostname, alternative_feeds, subtitles, skip_video_on_error=True
+        self,
+        course_json,
+        driver,
+        hostname,
+        alternative_feeds,
+        subtitles,
+        skip_video_on_error=True,
     ):
-        assert videos_json is not None
+        assert course_json is not None
         self._driver = driver
         self._videos = []
+
+        # Traverse groups/folders
+        queue = [("", course_json)]
+        videos_json = []
+        # Not sure if the only two types are 'SyllabusLessonType' and 'SyllabusGroupType'.
+        while len(queue) > 0:
+            path, items = queue.pop()
+            for item in items:
+                if type(item) is dict:
+                    if "lesson" in item["type"].lower():
+                        item["path_prefix"] = path
+                        videos_json.append(item)
+                    else:
+                        queue.append(
+                            (
+                                os.path.join(
+                                    path, strip_illegal_path(item["groupInfo"]["name"])
+                                ),
+                                item["lessons"],
+                            )
+                        )
+
         total_videos_num = len(videos_json)
         update_course_retrieval_progress(0, total_videos_num)
 
@@ -222,6 +251,7 @@ class EchoCloudVideo(EchoVideo):
     def __init__(self, video_json, driver, hostname, alternative_feeds, subtitles):
         self.hostname = hostname
         self._driver = driver
+        self._path_prefix = video_json["path_prefix"]
         self.video_json = video_json
         self.is_multipart_video = False
         self.sub_videos = [self]
@@ -261,6 +291,7 @@ class EchoCloudVideo(EchoVideo):
         self._title = video_json["lesson"]["lesson"]["name"]
 
     def download(self, output_dir, filename, pool_size=50):
+        output_dir = os.path.join(output_dir, self._path_prefix)
         print("")
         print("-" * 60)
         print('Downloading "{}"'.format(filename))
@@ -297,6 +328,7 @@ class EchoCloudVideo(EchoVideo):
         return final_result
 
     def download_single(self, session, single_url, output_dir, filename, pool_size):
+        filename = strip_illegal_path(filename)
         if os.path.exists(os.path.join(output_dir, filename + ".mp4")):
             print(" > Skipping downloaded video")
             print("-" * 60)
@@ -335,20 +367,31 @@ class EchoCloudVideo(EchoVideo):
                 # hacky way to get the current url media id
                 # not sure if each feed can have a different media id, so better download it for every feed.
                 try:
-                    media_id = [media["id"] for media in self.video_json['lesson']['medias'] if media["id"] in single_url][0]
+                    media_id = [
+                        media["id"]
+                        for media in self.video_json["lesson"]["medias"]
+                        if media["id"] in single_url
+                    ][0]
                 except IndexError:
                     media_id = None
                 if media_id is not None:
                     print("  > Downloading subtitles:")
                     vtt_url = f"{self.hostname}/api/ui/echoplayer/lessons/{self.video_id}/medias/{media_id}/transcript-file?format=vtt"
-                    cookies = {cookie['name']: cookie['value'] for cookie in self._driver.get_cookies()}
+                    cookies = {
+                        cookie["name"]: cookie["value"]
+                        for cookie in self._driver.get_cookies()
+                    }
                     response = requests.get(vtt_url, cookies=cookies)
                     if response.status_code == 200:
                         head = requests.head(vtt_url, cookies=cookies)
                         if head.status_code == 200:
-                            print(f"Original subtitle name: {head.headers['Content-Disposition']}")
+                            print(
+                                f"Original subtitle name: {head.headers['Content-Disposition']}"
+                            )
                         # Use same filename as mp4 since VLC will automatically use a vtt if the filename matches.
-                        with open(os.path.join(output_dir, f"{filename}.vtt"), "wb") as file:
+                        with open(
+                            os.path.join(output_dir, f"{filename}.vtt"), "wb"
+                        ) as file:
                             file.write(response.content)
                     else:
                         print("No subtitles found.")
