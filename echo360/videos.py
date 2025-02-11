@@ -311,6 +311,28 @@ class EchoCloudVideo(EchoVideo):
             # download_alternative_feeds defaults to False, slice to include only the first one
             urls = urls[:1]
 
+        # Download attached media (Example: mediaType: Presentation can contain PDF slides)
+        cookies = {
+            cookie["name"]: cookie["value"] for cookie in self._driver.get_cookies()
+        }
+        for media in self.video_json["lesson"]["medias"]:
+            if media["mediaType"] != "Video":
+                media_filename = media["title"]
+                media_filepath = os.path.join(output_dir, media_filename)
+                media_url = (
+                    f"{self.hostname}/media/download/{media['id']}/{media_filename}"
+                )
+                if os.path.exists(media_filepath):
+                    print(
+                        "> Media {} already downloaded, skipped.".format(media_filename)
+                    )
+                else:
+                    response = requests.get(media_url, cookies=cookies)
+                    if response.status_code == 200:
+                        print("> Downloading media {}...".format(media_filename))
+                        with open(media_filepath, "wb") as file:
+                            file.write(response.content)
+
         final_result = True
         for counter, single_url in enumerate(urls):
             if self.download_alternative_feeds:
