@@ -1,3 +1,5 @@
+from datetime import datetime
+import json
 import dateutil.parser
 import os
 import sys
@@ -6,7 +8,7 @@ import re
 
 from .course import EchoCloudCourse
 from .echo_exceptions import EchoLoginError
-from .utils import naive_versiontuple, PERSISTENT_SESSION_FOLDER
+from .utils import naive_versiontuple, PERSISTENT_SESSION_FOLDER, strip_illegal_path
 
 import pip_ensure_version
 from pick import pick
@@ -191,6 +193,7 @@ class EchoDownloader(object):
         webdriver_to_use="phantomjs",
         interactive_mode=False,
         persistent_session=False,
+        dump_json=False,
     ):
         self._course = course
         root_path = os.path.dirname(os.path.abspath(sys.modules["__main__"].__file__))
@@ -200,6 +203,7 @@ class EchoDownloader(object):
         self._date_range = date_range
         self._username = username
         self._password = password
+        self._dump_json = dump_json
         self.interactive_mode = interactive_mode
 
         self.regex_replace_invalid = re.compile(r"[\\\\/:*?\"<>|]")
@@ -342,14 +346,26 @@ class EchoDownloader(object):
             self.login()
         sys.stdout.write(">> Retrieving echo360 Course Info... ")
         sys.stdout.flush()
+
+        # change the output directory to be inside a folder named after the course
+        # replace invalid character for folder
+        if isinstance(self._course, EchoCloudCourse):
+            self._output_dir = os.path.join(
+                self._output_dir,
+                "{0}".format(self._course.nice_name).strip(),
+            )
+        if self._output_dir and not os.path.isdir(self._output_dir):
+            os.makedirs(self._output_dir)
+        if self._dump_json:
+            dump_json_path = os.path.join(
+                self._output_dir,
+                f"course_{datetime.now().replace(microsecond=0).isoformat().replace(':','_')}.json",
+            )
+            with open(dump_json_path, "w") as f:
+                f.write(json.dumps(self._course._get_course_data()))
+
         videos = self._course.get_videos().videos
         print("Done!")
-        # change the output directory to be inside a folder named after the course
-        self._output_dir = os.path.join(
-            self._output_dir, "{0}".format(self._course.nice_name).strip()
-        )
-        # replace invalid character for folder
-        self.regex_replace_invalid.sub("_", self._output_dir)
 
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         videos_to_be_download = []

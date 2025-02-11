@@ -329,6 +329,41 @@ class EchoCloudVideo(EchoVideo):
 
     def download_single(self, session, single_url, output_dir, filename, pool_size):
         filename = strip_illegal_path(filename)
+        if self.download_subtitles:
+            # hacky way to get the current url media id
+            # not sure if each feed can have a different media id, so better download it for every feed.
+            try:
+                media_id = [
+                    media["id"]
+                    for media in self.video_json["lesson"]["medias"]
+                    if media["id"] in single_url
+                ][0]
+            except IndexError:
+                print("  > No subtitles found.")
+            else:
+                subtitle_path = os.path.join(output_dir, f"{filename}.vtt")
+                if os.path.exists(subtitle_path):
+                    print(" > Skipping downloaded subtitle")
+                else:
+                    print("  > Downloading subtitles:")
+                    vtt_url = f"{self.hostname}/api/ui/echoplayer/lessons/{self.video_id}/medias/{media_id}/transcript-file?format=vtt"
+                    cookies = {
+                        cookie["name"]: cookie["value"]
+                        for cookie in self._driver.get_cookies()
+                    }
+                    response = requests.get(vtt_url, cookies=cookies)
+                    if response.status_code == 200:
+                        head = requests.head(vtt_url, cookies=cookies)
+                        if head.status_code == 200:
+                            print(
+                                f"Original subtitle name: {head.headers['Content-Disposition']}"
+                            )
+                        # Use same filename as mp4 since VLC will automatically use a vtt if the filename matches.
+                        with open(subtitle_path, "wb") as file:
+                            file.write(response.content)
+                    else:
+                        print("No subtitles found.")
+
         if os.path.exists(os.path.join(output_dir, filename + ".mp4")):
             print(" > Skipping downloaded video")
             print("-" * 60)
@@ -362,39 +397,6 @@ class EchoCloudVideo(EchoVideo):
                 return False
             # NOW we can finally start downloading!
             from .hls_downloader import urljoin
-
-            if self.download_subtitles:
-                # hacky way to get the current url media id
-                # not sure if each feed can have a different media id, so better download it for every feed.
-                try:
-                    media_id = [
-                        media["id"]
-                        for media in self.video_json["lesson"]["medias"]
-                        if media["id"] in single_url
-                    ][0]
-                except IndexError:
-                    media_id = None
-                if media_id is not None:
-                    print("  > Downloading subtitles:")
-                    vtt_url = f"{self.hostname}/api/ui/echoplayer/lessons/{self.video_id}/medias/{media_id}/transcript-file?format=vtt"
-                    cookies = {
-                        cookie["name"]: cookie["value"]
-                        for cookie in self._driver.get_cookies()
-                    }
-                    response = requests.get(vtt_url, cookies=cookies)
-                    if response.status_code == 200:
-                        head = requests.head(vtt_url, cookies=cookies)
-                        if head.status_code == 200:
-                            print(
-                                f"Original subtitle name: {head.headers['Content-Disposition']}"
-                            )
-                        # Use same filename as mp4 since VLC will automatically use a vtt if the filename matches.
-                        with open(
-                            os.path.join(output_dir, f"{filename}.vtt"), "wb"
-                        ) as file:
-                            file.write(response.content)
-                    else:
-                        print("No subtitles found.")
 
             audio_file = None
             if m3u8_audio is not None:
