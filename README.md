@@ -137,6 +137,7 @@ optional arguments:
                         video, which could be the alternative feed. Might
                         only work on some 'echo360.org' hosts.
   --subtitles, -s       Download VTT subtitles for each video feed.
+  --dump-json           Download JSON representation of course to output directory.
   --debug               Enable extensive logging.
   --auto                Only effective for 'echo360.org' host. When set, this
                         script will attempts to automatically redirects after
