@@ -163,6 +163,21 @@ def handle_args():
                 some 'echo360.org' hosts.",
     )
     parser.add_argument(
+        "--subtitles",
+        "-s",
+        action="store_true",
+        default=False,
+        dest="subtitles",
+        help="Download VTT subtitles for each video feed.",
+    )
+    parser.add_argument(
+        "--dump-json",
+        action="store_true",
+        default=False,
+        dest="dump_json",
+        help="Download JSON representation of course to output directory.",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         default=False,
@@ -253,6 +268,8 @@ def handle_args():
         args["alternative_feeds"],
         args["echo360cloud"],
         args["persistent_session"],
+        args["subtitles"],
+        args["dump_json"],
     )
 
 
@@ -274,6 +291,8 @@ def main():
         alternative_feeds,
         usingEcho360Cloud,
         persistent_session,
+        subtitles,
+        dump_json,
     ) = handle_args()
 
     setup_logging(enable_degbug)
@@ -350,7 +369,9 @@ def main():
         course_uuid = re.search(
             "[^/]([0-9a-zA-Z]+[-])+[0-9a-zA-Z]+", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCloudCourse(course_uuid, course_hostname, alternative_feeds)
+        course = EchoCloudCourse(
+            course_uuid, course_hostname, alternative_feeds, subtitles=subtitles
+        )
     else:
         # import it here for monkey patching gevent, to fix the followings:
         # MonkeyPatchWarning: Monkey-patching ssl after ssl has already been
@@ -360,7 +381,7 @@ def main():
         course_uuid = re.search(
             "[^/]+(?=/$|$)", course_url
         ).group()  # retrieve the last part of the URL
-        course = EchoCourse(course_uuid, course_hostname)
+        course = EchoCourse(course_uuid, course_hostname, subtitles=subtitles)
     downloader = EchoDownloader(
         course,
         output_path,
@@ -372,6 +393,7 @@ def main():
         webdriver_to_use=webdriver_to_use,
         interactive_mode=interactive_mode,
         persistent_session=persistent_session,
+        dump_json=dump_json,
     )
 
     _LOGGER.debug(

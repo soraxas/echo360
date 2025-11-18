@@ -1,3 +1,4 @@
+from itertools import count
 import ffmpy
 import gevent
 from gevent.pool import Pool
@@ -78,49 +79,57 @@ class Downloader:
         self.dir = dir
         if self.dir and not os.path.isdir(self.dir):
             os.makedirs(self.dir)
-        r = self.session.get(m3u8_url, timeout=10)
-        if r.ok:
-            body = r.content
-            if body:
-                # use set to prevent duplicates
-                ts_list = {
-                    urljoin(m3u8_url, n.strip())
-                    for n in body.decode().split("\n")
-                    if n and not n.startswith("#")
-                }
-                ts_list = list(ts_list)
-                # this is very hacky as well.. But idk how to overcome some m3u8 has nested
-                # m3u8 and some don't.
-                if len(ts_list) == 1 and ts_list[0].split(".")[-1] not in (
-                    "ts",
-                    "mp4",
-                    "m4s",
-                ):
-                    file_name = ts_list[0].split("/")[-1].split("?")[0]
-                    chunk_list_url = "{0}/{1}".format(
-                        m3u8_url[: m3u8_url.rfind("/")], file_name
+        for try_n in count(start=1):
+            r = self.session.get(m3u8_url, timeout=10)
+            if r.ok:
+                body = r.content
+                if body:
+                    # use set to prevent duplicates
+                    ts_list = {
+                        urljoin(m3u8_url, n.strip())
+                        for n in body.decode().split("\n")
+                        if n and not n.startswith("#")
+                    }
+                    ts_list = list(ts_list)
+                    # this is very hacky as well.. But idk how to overcome some m3u8 has nested
+                    # m3u8 and some don't.
+                    if len(ts_list) == 1 and ts_list[0].split(".")[-1] not in (
+                        "ts",
+                        "mp4",
+                        "m4s",
+                    ):
+                        file_name = ts_list[0].split("/")[-1].split("?")[0]
+                        chunk_list_url = "{0}/{1}".format(
+                            m3u8_url[: m3u8_url.rfind("/")], file_name
+                        )
+                        r = self.session.get(chunk_list_url, timeout=20)
+                        if r.ok:
+                            body = r.content
+                            ts_list = [
+                                urljoin(m3u8_url, n.strip())
+                                for n in body.decode().split("\n")
+                                if n and not n.startswith("#")
+                            ]
+                        # re-retrieve to get all ts file list
+
+                    ts_list = zip(ts_list, [n for n in range(len(ts_list))])
+                    ts_list = list(ts_list)
+
+                    if ts_list:
+                        self.ts_total = len(ts_list)
+                        self.ts_current = 0
+                        g1 = gevent.spawn(self._join_file)
+                        self._download(ts_list)
+                        g1.join()
+                break
+            else:
+                print(
+                    "Failed status code: {}, try {}, waiting {} minutes. Ctrl+C to cancel".format(
+                        r.status_code, try_n, try_n
                     )
-                    r = self.session.get(chunk_list_url, timeout=20)
-                    if r.ok:
-                        body = r.content
-                        ts_list = [
-                            urljoin(m3u8_url, n.strip())
-                            for n in body.decode().split("\n")
-                            if n and not n.startswith("#")
-                        ]
-                    # re-retrieve to get all ts file list
+                )
+                time.sleep(60 * try_n)
 
-                ts_list = zip(ts_list, [n for n in range(len(ts_list))])
-                ts_list = list(ts_list)
-
-                if ts_list:
-                    self.ts_total = len(ts_list)
-                    self.ts_current = 0
-                    g1 = gevent.spawn(self._join_file)
-                    self._download(ts_list)
-                    g1.join()
-        else:
-            print("Failed status code: {}".format(r.status_code))
         infile_name = os.path.join(
             self.dir,
             self._result_file_name.split(".")[0]

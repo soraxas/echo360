@@ -1,24 +1,26 @@
+import functools
 import json
-import re
 import sys
 
 import requests
 import selenium
 import logging
 
+from .utils import strip_illegal_path
 from .videos import EchoVideos, EchoCloudVideos
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class EchoCourse(object):
-    def __init__(self, uuid, hostname=None, alternative_feeds=False):
+    def __init__(self, uuid, hostname=None, alternative_feeds=False, subtitles=False):
         self._course_id = None
         self._course_name = None
         self._uuid = uuid
         self._videos = None
         self._driver = None
         self._alternative_feeds = alternative_feeds
+        self._subtitles = subtitles
         if hostname is None:
             self._hostname = "https://view.streaming.sydney.edu.au:8443"
         else:
@@ -139,7 +141,11 @@ class EchoCloudCourse(EchoCourse):
                 course_data_json = self._get_course_data()
                 videos_json = course_data_json["data"]
                 self._videos = EchoCloudVideos(
-                    videos_json, self._driver, self.hostname, self._alternative_feeds
+                    videos_json,
+                    self._driver,
+                    self.hostname,
+                    self._alternative_feeds,
+                    self._subtitles,
                 )
             # except KeyError as e:
             #     print("Unable to parse course videos from JSON (course_data)")
@@ -173,20 +179,29 @@ class EchoCloudCourse(EchoCourse):
         return self._course_id
 
     @property
+    @functools.lru_cache
     def course_name(self):
-        if self._course_name is None:
-            # try each available video as some video might be special has contains
-            # no information about the course.
-            for v in self.course_data["data"]:
-                try:
-                    self._course_name = v["lesson"]["video"]["published"]["courseName"]
-                    break
-                except KeyError:
-                    pass
-            if self._course_name is None:
-                # no available course name found...?
-                self._course_name = "[[UNTITLED]]"
-        return self._course_name
+        cookies = {
+            cookie["name"]: cookie["value"] for cookie in self._driver.get_cookies()
+        }
+        response = requests.get(
+            "https://echo360.net.au/user/enrollments", cookies=cookies
+        )
+        if response.status_code == 200:
+            course_list = response.json()["data"]
+            for sections_parts in course_list:
+                matching = [
+                    x
+                    for x in sections_parts["userSections"]
+                    if x["sectionId"] == self._uuid
+                ]
+                if len(matching) > 0:
+                    course = matching[0]
+                    return strip_illegal_path(
+                        f"{course['courseCode']} - {course['sectionName']} {course['courseName']}"
+                    )
+
+        return "[[UNTITLED]]"
 
     @property
     def nice_name(self):
