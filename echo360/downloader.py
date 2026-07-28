@@ -111,13 +111,13 @@ def build_firefox_driver(
     log_path,
     persistent_session,
 ):
-    if persistent_session:
+    if persistent_session and not selenium_version_ge_4100:
         raise NotImplementedError(
-            "Save-login not implemented for Firefox! Feel free to make a PR for it..."
+            "Save-login for Firefox requires selenium>=4.10 (it needs the "
+            "modern Options/Service API). Please upgrade selenium, or use "
+            "--chrome instead."
         )
 
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("general.useragent.override", user_agent)
     kwargs = dict()
 
     if selenium_version_ge_4100:
@@ -125,7 +125,27 @@ def build_firefox_driver(
         from selenium.webdriver.firefox.options import Options
 
         option = Options()
-        option.profile = profile
+
+        if persistent_session:
+            # selenium's FirefoxProfile(profile_directory=...) only *copies*
+            # the given directory into a throwaway temp profile, so it can't
+            # be used to persist login state across runs. Passing "-profile
+            # <dir>" as a raw browser argument instead makes geckodriver
+            # launch Firefox directly against that directory, so
+            # cookies/login state get written back to it and survive across
+            # runs, the same way Chrome's --user-data-dir does above.
+            # (geckodriver rejects setting both a --profile argument and a
+            # FirefoxProfile object, so the user-agent override is set as a
+            # plain preference here instead of via a profile.)
+            folder_path = os.path.abspath(PERSISTENT_SESSION_FOLDER)
+            os.makedirs(folder_path, exist_ok=True)
+            option.add_argument("-profile")
+            option.add_argument(folder_path)
+            option.set_preference("general.useragent.override", user_agent)
+        else:
+            profile = webdriver.FirefoxProfile()
+            profile.set_preference("general.useragent.override", user_agent)
+            option.profile = profile
 
         service = Service(**kwargs, log_file=log_path)
         kwargs = dict(
@@ -133,6 +153,10 @@ def build_firefox_driver(
             options=option,
         )
     else:
+        # persistent_session is guaranteed False here (checked above).
+        profile = webdriver.FirefoxProfile()
+        profile.set_preference("general.useragent.override", user_agent)
+
         if use_local_binary:
             from .binary_downloader.firefoxdriver import FirefoxDownloader
 
