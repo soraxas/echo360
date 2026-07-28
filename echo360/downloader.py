@@ -369,11 +369,10 @@ class EchoDownloader(object):
         videos = self._course.get_videos().videos
         print("Done!")
         # change the output directory to be inside a folder named after the course
-        self._output_dir = os.path.join(
-            self._output_dir, "{0}".format(self._course.nice_name).strip()
+        course_folder_name = self.regex_replace_invalid.sub(
+            "_", "{0}".format(self._course.nice_name).strip()
         )
-        # replace invalid character for folder
-        self.regex_replace_invalid.sub("_", self._output_dir)
+        self._output_dir = os.path.join(self._output_dir, course_folder_name)
 
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
         videos_to_be_download = []
