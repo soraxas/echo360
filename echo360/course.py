@@ -2,7 +2,6 @@ import json
 import re
 import sys
 
-import requests
 import selenium
 import logging
 
@@ -200,17 +199,22 @@ class EchoCloudCourse(EchoCourse):
                 self.video_url,
                 self._driver.page_source,
             )
-            # use requests to retrieve data
-            session = requests.Session()
-            # load cookies
-            for cookie in self._driver.get_cookies():
-                session.cookies.set(cookie["name"], cookie["value"])
-
-            r = session.get(self.video_url)
-            if not r.ok:
-                raise Exception("Error: Failed to get m3u8 info for EchoCourse!")
-
-            json_str = r.text
+            # Echo360 now content-negotiates on Accept: a plain browser
+            # navigation to this URL gets the React app shell (HTML), but an
+            # XHR/fetch sent with Accept: application/json from within the
+            # already-authenticated page gets the raw JSON, same as the
+            # React app itself does internally. Replaying the selenium
+            # session's cookies into a fresh requests.Session (as this used
+            # to do) no longer works: Echo360 doesn't recognize that
+            # replayed session and redirects it to the login page instead.
+            fetch_script = """
+                var callback = arguments[arguments.length - 1];
+                fetch(arguments[0], {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
+                  .then(function(r) { return r.text(); })
+                  .then(function(t) { callback(t); })
+                  .catch(function(e) { callback('FETCH_ERROR: ' + e); });
+            """
+            json_str = self.driver.execute_async_script(fetch_script, self.video_url)
         except ValueError as e:
             raise Exception("Unable to retrieve JSON (course_data) from url", e)
         self.course_data = json.loads(json_str)
