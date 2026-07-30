@@ -216,7 +216,7 @@ class EchoCloudCourse(EchoCourse):
         # this keeps working wherever it already does.
         try:
             course_data = self._fetch_course_data_via_json_api()
-            if isinstance(course_data, dict) and "data" in course_data:
+            if isinstance(course_data, dict) and isinstance(course_data.get("data"), list):
                 self.course_data = course_data
                 return self.course_data
             _LOGGER.debug(
