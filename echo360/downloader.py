@@ -12,6 +12,7 @@ import pip_ensure_version
 from pick import pick
 import selenium
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import selenium.common.exceptions as seleniumException
 import warnings  # hide the warnings of phantomjs being deprecated
@@ -340,7 +341,7 @@ class EchoDownloader(object):
         user_passwd.send_keys(self._password)
 
         try:
-            login_btn = self._driver.find_element_by_id("login-btn")
+            login_btn = self._driver.find_element(By.ID, "login-btn")
             login_btn.submit()
         except seleniumException.NoSuchElementException:
             # try submit via enter key
@@ -372,6 +373,8 @@ class EchoDownloader(object):
         course_folder_name = self.regex_replace_invalid.sub(
             "_", "{0}".format(self._course.nice_name).strip()
         )
+        if course_folder_name in (".", ".."):
+            course_folder_name = "_" + course_folder_name
         self._output_dir = os.path.join(self._output_dir, course_folder_name)
 
         filtered_videos = [video for video in videos if self._in_date_range(video.date)]
@@ -468,8 +471,8 @@ class EchoDownloader(object):
 
     def find_element_by_partial_id(self, id):
         try:
-            return self._driver.find_element_by_xpath(
-                "//*[contains(@id,'{0}')]".format(id)
+            return self._driver.find_element(
+                By.XPATH, "//*[contains(@id,'{0}')]".format(id)
             )
         except seleniumException.NoSuchElementException:
             return None

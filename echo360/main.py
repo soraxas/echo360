@@ -102,7 +102,7 @@ def handle_args():
         default=False,
         dest="persistent_session",
         help="Starts a persistent session (helps to store credentials). Session uses \
-            '{}' folder, and currently only supports chrome driver.".format(
+            '{}' folder. Supported by chrome and firefox (firefox requires selenium>=4.10).".format(
             PERSISTENT_SESSION_FOLDER
         ),
     )

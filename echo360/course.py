@@ -4,6 +4,7 @@ import sys
 
 import selenium
 import logging
+from selenium.webdriver.common.by import By
 
 from .videos import EchoVideos, EchoCloudVideos
 
@@ -111,7 +112,7 @@ class EchoCourse(object):
                 self.video_url,
                 self._driver.page_source,
             )
-            json_str = self.driver.find_element_by_tag_name("pre").text
+            json_str = self.driver.find_element(By.TAG_NAME, "pre").text
         except ValueError as e:
             raise Exception("Unable to retrieve JSON (course_data) from url", e)
         self.course_data = json.loads(json_str)
@@ -207,7 +208,7 @@ class EchoCloudCourse(EchoCourse):
     _LESSON_START_TIME_RE = re.compile(
         r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?)_\d{4}-\d{2}-\d{2}T"
     )
-    _HEADING_RE = re.compile(r"<h1>\s*(.*?)\s*</h1>", re.DOTALL)
+    _HEADING_RE = re.compile(r"<h1\b[^>]*>\s*(.*?)\s*</h1>", re.DOTALL)
 
     def _get_course_data(self):
         # Some echo360 cloud/self-hosted instances still serve real JSON
@@ -215,20 +216,25 @@ class EchoCloudCourse(EchoCourse):
         # this keeps working wherever it already does.
         try:
             course_data = self._fetch_course_data_via_json_api()
-            if course_data.get("data"):
+            if isinstance(course_data, dict) and isinstance(course_data.get("data"), list):
                 self.course_data = course_data
                 return self.course_data
             _LOGGER.debug(
                 "JSON syllabus endpoint returned no lessons; falling back to "
                 "scraping the section home page"
             )
-        except Exception as e:
+        except (selenium.common.exceptions.WebDriverException, ValueError) as e:
             _LOGGER.debug(
                 "JSON syllabus endpoint unavailable (%s); falling back to "
                 "scraping the section home page",
                 e,
             )
-        return self._scrape_course_data_from_section_page()
+        try:
+            return self._scrape_course_data_from_section_page()
+        except selenium.common.exceptions.TimeoutException as e:
+            raise Exception(
+                "Error: Failed to get lesson info for EchoCloudCourse!"
+            ) from e
 
     def _fetch_course_data_via_json_api(self):
         self.driver.get(self.video_url)
@@ -290,7 +296,8 @@ class EchoCloudCourse(EchoCourse):
 
         lessons = []
         for class_suffix, lesson_id in self._LESSON_ROW_RE.findall(page):
-            if "live" in class_suffix.split() or "future" in class_suffix.split():
+            tokens = set(token for token in re.split(r'[\s\-]+', class_suffix) if token)
+            if tokens & {'live', 'future'}:
                 # not recorded/available yet, nothing to download
                 continue
             start_time_match = self._LESSON_START_TIME_RE.search(lesson_id)
@@ -303,7 +310,7 @@ class EchoCloudCourse(EchoCourse):
                         "startTimeUTC": start_time,
                         "lesson": {
                             "id": lesson_id,
-                            "name": self._course_name or lesson_id,
+                            "name": start_time or lesson_id,
                             "createdAt": start_time,
                         },
                     }
