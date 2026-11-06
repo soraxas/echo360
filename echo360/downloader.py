@@ -216,8 +216,12 @@ class EchoDownloader(object):
         webdriver_to_use="phantomjs",
         interactive_mode=False,
         persistent_session=False,
+        download_transcripts=False,
+        transcripts_only=False,
     ):
         self._course = course
+        self.download_transcripts = download_transcripts or transcripts_only
+        self.transcripts_only = transcripts_only
         root_path = os.path.dirname(os.path.abspath(sys.modules["__main__"].__file__))
         if output_dir == "":
             output_dir = root_path
@@ -419,14 +423,23 @@ class EchoDownloader(object):
 
         downloaded_videos = []
         for filename, video in videos_to_be_download:
-            if video.url is False:
+            downloaded = False
+            if self.transcripts_only:
+                pass
+            elif video.url is False:
                 print(
                     ">> Skipping Lecture '{0}' as it says it does "
                     "not contain any video.".format(filename)
                 )
             else:
-                if video.download(self._output_dir, filename):
-                    downloaded_videos.insert(0, filename)
+                downloaded = video.download(self._output_dir, filename)
+            if self.download_transcripts:
+                transcript_downloaded = video.download_transcript(
+                    self._output_dir, filename
+                )
+                downloaded = downloaded or transcript_downloaded
+            if downloaded:
+                downloaded_videos.insert(0, filename)
         print(self.success_msg(self._course.course_name, downloaded_videos))
         self._driver.close()
 

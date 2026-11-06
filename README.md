@@ -85,6 +85,7 @@ python echo360.py
                   [--password PASSWORD] [--setup-credentials]
                   [--download-phantomjs-binary] [--chrome] [--firefox]
                   [--echo360cloud] [--interactive] [--alternative_feeds]
+                  [--transcripts] [--transcripts-only]
                   [--debug] [--auto | --manual]
                   ECHO360_URL
 
@@ -135,6 +136,13 @@ optional arguments:
                         downloader will also try to download the second
                         video, which could be the alternative feed. Might
                         only work on some 'echo360.org' hosts.
+  --transcripts, -T     Also download each lecture's transcript (as .txt, plus
+                        .vtt captions when available) alongside the video.
+                        Only supported on echo360 cloud.
+  --transcripts-only, -t
+                        Download only the lecture transcripts (as .txt, plus
+                        .vtt captions when available) instead of the videos.
+                        Only supported on echo360 cloud.
   --debug               Enable extensive logging.
   --auto                Only effective for 'echo360.org' host. When set, this
                         script will attempts to automatically redirects after
@@ -187,6 +195,17 @@ optional arguments:
     --output "~/Lectures"                  \
     --after-date "2014-08-26"              \
     --before-date "2014-10-14"
+```
+
+### Download transcripts (echo360 cloud only)
+
+Download each lecture's transcript alongside its video, or only the transcripts
+(no video files). Each transcript is saved as a plain-text `.txt` file, plus the
+timestamped `.vtt` captions when the lecture has them.
+
+```shell
+>>> python echo360.py COURSE_URL --transcripts       # videos + transcripts
+>>> python echo360.py COURSE_URL --transcripts-only  # transcripts only
 ```
 
 ### Use chrome driver (instead of phantomjs)
